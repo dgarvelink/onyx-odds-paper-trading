@@ -4,6 +4,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { clerkAuth } from "./middleware/auth.js";
 import onyxRouter from "./routes/onyx.js";
+import usersRouter from "./routes/users.js";
 
 const app = new Hono();
 
@@ -17,6 +18,7 @@ app.use(
 );
 
 app.route("/", onyxRouter);
+app.route("/", usersRouter);
 
 app.get("/health", (c) => {
   return c.json({ status: "ok" });
