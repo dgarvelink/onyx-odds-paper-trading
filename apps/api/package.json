@@ -1,0 +1,29 @@
+{
+  "name": "@onyx-odds/api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@onyx-odds/types": "*",
+    "@clerk/backend": "^1.0.0",
+    "@hono/node-server": "^1.13.0",
+    "@prisma/client": "^6.0.0",
+    "decimal.js": "^10.4.3",
+    "dotenv": "^16.4.0",
+    "hono": "^4.6.0",
+    "ioredis": "^5.4.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "prisma": "^6.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}
