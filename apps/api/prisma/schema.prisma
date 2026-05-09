@@ -1,0 +1,43 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String     @id @default(cuid())
+  clerkId      String     @unique
+  balanceCents Int        @default(100000)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  orders       Order[]
+  positions    Position[]
+}
+
+model Order {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  symbol    String
+  side      String
+  quantity  Int
+  fillPrice Int
+  status    String   @default("FILLED")
+  createdAt DateTime @default(now())
+}
+
+model Position {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  symbol        String
+  side          String
+  quantity      Int
+  avgPriceCents Int
+  updatedAt     DateTime @updatedAt
+
+  @@unique([userId, symbol, side])
+}
