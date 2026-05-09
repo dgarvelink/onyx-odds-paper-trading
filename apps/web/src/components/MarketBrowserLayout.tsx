@@ -1,10 +1,15 @@
+import { useState, useEffect } from "react";
+import { UserButton } from "@clerk/react";
 import { useSportsStore } from "../stores/sportsStore.js";
 import type { ActiveFilter } from "../stores/sportsStore.js";
+import { useBetSlipStore } from "../stores/betSlipStore.js";
 import { useGames } from "../hooks/useGames.js";
 import type { Game } from "../hooks/useGames.js";
+import { useBalance } from "../hooks/useBalance.js";
 import { SportsTabs } from "./SportsTabs.js";
 import { SearchBar } from "./SearchBar.js";
 import { GameCard } from "./GameCard.js";
+import { BetSlip } from "./BetSlip.js";
 
 const STATUS_ORDER: Record<string, number> = { InProgress: 0, Scheduled: 1, Final: 2 };
 
@@ -53,13 +58,36 @@ function filterAndSort(
 export function MarketBrowserLayout() {
   const { activeSport, activeFilter, searchQuery, setActiveFilter } = useSportsStore();
   const { games, isLoading, isError } = useGames(activeSport);
+  const { selections } = useBetSlipStore();
+  const { balance } = useBalance();
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  useEffect(() => {
+    if (selections.length === 0) setDrawerOpen(false);
+  }, [selections.length]);
 
   const visibleGames = filterAndSort(games, searchQuery, activeFilter);
 
   return (
     <div className="flex h-screen overflow-hidden bg-zinc-950 text-zinc-100">
-      {/* Game list */}
       <div className="flex flex-1 flex-col overflow-hidden">
+        {/* Nav header */}
+        <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-3">
+          <span className="font-bold tracking-tight text-zinc-100">Onyx Odds</span>
+          <div className="flex items-center gap-3">
+            {balance !== undefined && (
+              <span className="text-sm font-medium text-zinc-300">
+                $
+                {balance.toLocaleString("en-US", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </span>
+            )}
+            <UserButton afterSignOutUrl="/sign-in" />
+          </div>
+        </div>
+
         <SportsTabs />
 
         {/* Search + filter bar */}
@@ -111,11 +139,43 @@ export function MarketBrowserLayout() {
             </div>
           )}
         </div>
+
+        {/* Mobile bet slip drawer */}
+        <div className="lg:hidden">
+          {selections.length > 0 && !drawerOpen && (
+            <button
+              onClick={() => setDrawerOpen(true)}
+              className="fixed bottom-0 left-0 right-0 z-40 bg-blue-500 py-3 text-center text-sm font-semibold text-white"
+            >
+              View Bet Slip ({selections.length})
+            </button>
+          )}
+          {drawerOpen && (
+            <div className="fixed inset-0 z-50 flex flex-col justify-end">
+              <div
+                className="absolute inset-0 bg-black/60"
+                onClick={() => setDrawerOpen(false)}
+              />
+              <div className="relative flex max-h-[80vh] flex-col rounded-t-2xl bg-zinc-900 p-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <span className="font-semibold text-zinc-100">Bet Slip</span>
+                  <button
+                    onClick={() => setDrawerOpen(false)}
+                    className="text-zinc-500 hover:text-zinc-300"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <BetSlip />
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Bet slip — Phase 6 */}
+      {/* Desktop bet slip sidebar */}
       <div className="hidden w-80 shrink-0 border-l border-zinc-800 p-4 lg:flex lg:flex-col">
-        <h2 className="font-semibold text-zinc-100">Bet Slip</h2>
+        <BetSlip />
       </div>
     </div>
   );

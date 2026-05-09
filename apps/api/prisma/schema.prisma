@@ -26,6 +26,7 @@ model Order {
   quantity  Int
   fillPrice Int
   status    String   @default("FILLED")
+  metadata  Json     @default("{}")
   createdAt DateTime @default(now())
 }
 

@@ -5,6 +5,8 @@ import { cors } from "hono/cors";
 import { clerkAuth } from "./middleware/auth.js";
 import onyxRouter from "./routes/onyx.js";
 import usersRouter from "./routes/users.js";
+import ordersRouter from "./routes/orders.js";
+import accountRouter from "./routes/account.js";
 
 const app = new Hono();
 
@@ -19,6 +21,8 @@ app.use(
 
 app.route("/", onyxRouter);
 app.route("/", usersRouter);
+app.route("/", ordersRouter);
+app.route("/", accountRouter);
 
 app.get("/health", (c) => {
   return c.json({ status: "ok" });
