@@ -3,6 +3,7 @@ import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { clerkAuth } from "./middleware/auth.js";
+import onyxRouter from "./routes/onyx.js";
 
 const app = new Hono();
 
@@ -14,6 +15,8 @@ app.use(
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   })
 );
+
+app.route("/", onyxRouter);
 
 app.get("/health", (c) => {
   return c.json({ status: "ok" });
