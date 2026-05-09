@@ -9,6 +9,8 @@ import {
 import { onyxFetch } from "../lib/onyx.js";
 import { getCached, setCached } from "../lib/redis.js";
 
+const BASE_URL = "https://predictions.dev-onyxodds.com";
+
 const onyx = new Hono();
 
 onyx.get("/api/onyx/sports", async (c) => {
@@ -111,21 +113,22 @@ onyx.get("/api/onyx/events", async (c) => {
   }
 });
 
-onyx.get("/api/onyx/games/:sport", async (c) => {
+onyx.get("/api/onyx/sportsdata/games", async (c) => {
   try {
-    const sport = c.req.param("sport");
-    const key = `onyx:games:${sport}`;
+    const sport = c.req.query("sport") ?? "";
+    const date = c.req.query("date") ?? new Date().toISOString().slice(0, 10);
+    const key = `onyx:sportsdata:games:${sport}:${date}`;
 
     const cached = await getCached<unknown>(key);
     if (cached) return c.json(cached);
 
-    console.warn(`/games/${sport}: passing through unvalidated Onyx response`);
-    const res = await fetch(`https://predictions.dev-onyxodds.com/games/${sport}`);
+    const params = new URLSearchParams({ sport, date });
+    const res = await fetch(`${BASE_URL}/api/sportsdata/games?${params}`);
     if (!res.ok) {
-      throw new Error(`Onyx API returned ${res.status} for /games/${sport}`);
+      throw new Error(`Onyx API returned ${res.status} for /api/sportsdata/games`);
     }
     const data: unknown = await res.json();
-    await setCached(key, data, 5);
+    await setCached(key, data, 30);
     return c.json(data);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
@@ -133,21 +136,43 @@ onyx.get("/api/onyx/games/:sport", async (c) => {
   }
 });
 
-onyx.get("/api/onyx/games/detail/:eventKey", async (c) => {
+onyx.get("/api/onyx/sportsdata/games/:sport/:gameId", async (c) => {
   try {
-    const eventKey = c.req.param("eventKey");
-    const key = `onyx:game:detail:${eventKey}`;
+    const sport = c.req.param("sport");
+    const gameId = c.req.param("gameId");
+    const key = `onyx:sportsdata:game:${sport}:${gameId}`;
 
     const cached = await getCached<unknown>(key);
     if (cached) return c.json(cached);
 
-    console.warn(`/games/detail/${eventKey}: passing through unvalidated Onyx response`);
-    const res = await fetch(`https://predictions.dev-onyxodds.com/games/detail/${eventKey}`);
+    const res = await fetch(`${BASE_URL}/api/sportsdata/games/${sport}/${gameId}`);
     if (!res.ok) {
-      throw new Error(`Onyx API returned ${res.status} for /games/detail/${eventKey}`);
+      throw new Error(`Onyx API returned ${res.status} for /api/sportsdata/games/${sport}/${gameId}`);
     }
     const data: unknown = await res.json();
-    await setCached(key, data, 5);
+    await setCached(key, data, 15);
+    return c.json(data);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return c.json({ error: "upstream_error", message }, 502);
+  }
+});
+
+onyx.get("/api/onyx/sportsdata/live", async (c) => {
+  try {
+    const sport = c.req.query("sport") ?? "";
+    const key = `onyx:sportsdata:live:${sport}`;
+
+    const cached = await getCached<unknown>(key);
+    if (cached) return c.json(cached);
+
+    const params = new URLSearchParams({ sport });
+    const res = await fetch(`${BASE_URL}/api/sportsdata/live?${params}`);
+    if (!res.ok) {
+      throw new Error(`Onyx API returned ${res.status} for /api/sportsdata/live`);
+    }
+    const data: unknown = await res.json();
+    await setCached(key, data, 10);
     return c.json(data);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
