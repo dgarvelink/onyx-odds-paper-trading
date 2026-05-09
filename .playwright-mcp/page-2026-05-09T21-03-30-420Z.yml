@@ -1,0 +1,63 @@
+- generic [ref=e102]:
+  - generic [ref=e103]:
+    - link "Onyx Odds" [ref=e104] [cursor=pointer]:
+      - /url: /dashboard
+    - generic [ref=e105]:
+      - generic [ref=e106]: $950.00
+      - button "Open user menu" [ref=e108] [cursor=pointer]:
+        - img "David Garv's logo" [ref=e111]
+  - generic [ref=e113]:
+    - generic [ref=e114]:
+      - heading "My Account" [level=1] [ref=e115]
+      - link "← Back to Markets" [ref=e116] [cursor=pointer]:
+        - /url: /dashboard
+    - generic [ref=e118]:
+      - generic [ref=e119]:
+        - paragraph [ref=e120]: Available Balance
+        - paragraph [ref=e121]: $950.00
+        - paragraph [ref=e122]: Available to bet
+      - generic [ref=e123]:
+        - paragraph [ref=e124]: Total Staked
+        - paragraph [ref=e125]: $50.00
+        - paragraph [ref=e126]: 2 open bets
+      - generic [ref=e127]:
+        - paragraph [ref=e128]: Total to Win
+        - paragraph [ref=e129]: $45.45
+        - paragraph [ref=e130]: If all bets win
+      - generic [ref=e131]:
+        - paragraph [ref=e132]: Total Bets Placed
+        - paragraph [ref=e133]: "5"
+        - paragraph [ref=e134]: All time
+    - generic [ref=e135]:
+      - button "Open Positions" [ref=e136]
+      - button "Order History" [ref=e137]
+    - table [ref=e139]:
+      - rowgroup [ref=e140]:
+        - row "Bet Type Side Qty Staked To Win Status Placed" [ref=e141]:
+          - columnheader "Bet" [ref=e142]
+          - columnheader "Type" [ref=e143]
+          - columnheader "Side" [ref=e144]
+          - columnheader "Qty" [ref=e145]
+          - columnheader "Staked" [ref=e146]
+          - columnheader "To Win" [ref=e147]
+          - columnheader "Status" [ref=e148]
+          - columnheader "Placed" [ref=e149]
+      - rowgroup [ref=e150]:
+        - row "LAL -2.9 spread HOME 3 $30.00 $27.27 OPEN 9m ago" [ref=e151]:
+          - cell "LAL -2.9" [ref=e152]
+          - cell "spread" [ref=e153]
+          - cell "HOME" [ref=e154]
+          - cell "3" [ref=e155]
+          - cell "$30.00" [ref=e156]
+          - cell "$27.27" [ref=e157]
+          - cell "OPEN" [ref=e158]
+          - cell "9m ago" [ref=e159]
+        - row "O 123 total OVER 2 $20.00 $18.18 OPEN 9m ago" [ref=e160]:
+          - cell "O 123" [ref=e161]
+          - cell "total" [ref=e162]
+          - cell "OVER" [ref=e163]
+          - cell "2" [ref=e164]
+          - cell "$20.00" [ref=e165]
+          - cell "$18.18" [ref=e166]
+          - cell "OPEN" [ref=e167]
+          - cell "9m ago" [ref=e168]

@@ -1,0 +1,5 @@
+[     766ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:5173/node_modules/.vite/deps/chunk-VAIV7N67.js?v=a226f90e:20102
+[     823ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5173/favicon.ico:0
+[     992ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:5173/node_modules/.vite/deps/chunk-VAIV7N67.js?v=df46373c:20102
+[    1313ms] [WARNING] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview @ https://neutral-haddock-62.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:11
+[    1761ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ http://localhost:5173/sign-in:0
