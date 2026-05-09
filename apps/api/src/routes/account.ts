@@ -1,8 +1,30 @@
 import { Hono } from "hono";
+import { Decimal } from "decimal.js";
 import { clerkAuth } from "../middleware/auth.js";
 import prisma from "../lib/prisma.js";
 
 const router = new Hono();
+
+interface OrderMetadata {
+  game_id: number;
+  betType: string;
+  label: string;
+  line: number;
+  odds: number;
+  toWinCents: number;
+}
+
+function latestOrderMap(
+  orders: Array<{ symbol: string; metadata: unknown }>
+): Map<string, OrderMetadata> {
+  const map = new Map<string, OrderMetadata>();
+  for (const o of orders) {
+    if (!map.has(o.symbol)) {
+      map.set(o.symbol, o.metadata as OrderMetadata);
+    }
+  }
+  return map;
+}
 
 router.get("/api/account/balance", clerkAuth, async (c) => {
   const clerkId = c.get("clerkId");
@@ -24,6 +46,86 @@ router.get("/api/account/orders", clerkAuth, async (c) => {
     orderBy: { createdAt: "desc" },
   });
   return c.json(orders);
+});
+
+router.get("/api/account/positions", clerkAuth, async (c) => {
+  const clerkId = c.get("clerkId");
+  const user = await prisma.user.findUnique({ where: { clerkId } });
+  if (!user) return c.json({ error: "user_not_found" }, 404);
+
+  const [positions, orders] = await Promise.all([
+    prisma.position.findMany({
+      where: { userId: user.id },
+      orderBy: { updatedAt: "desc" },
+    }),
+    prisma.order.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: "desc" },
+    }),
+  ]);
+
+  const metaMap = latestOrderMap(orders);
+
+  const enriched = positions.map((p) => {
+    const betType = p.symbol.split("-")[0].toLowerCase();
+    const meta = metaMap.get(p.symbol);
+
+    return {
+      id: p.id,
+      symbol: p.symbol,
+      betType,
+      side: p.side,
+      quantity: p.quantity,
+      stakeCents: p.avgPriceCents * p.quantity,
+      toWinCents: (meta?.toWinCents ?? 0) * p.quantity,
+      label: meta?.label ?? p.symbol,
+      line: meta?.line ?? 0,
+      odds: -110,
+      game_id: meta?.game_id ?? 0,
+      status: "OPEN",
+      updatedAt: p.updatedAt,
+    };
+  });
+
+  return c.json(enriched);
+});
+
+router.get("/api/account/summary", clerkAuth, async (c) => {
+  const clerkId = c.get("clerkId");
+  const user = await prisma.user.findUnique({ where: { clerkId } });
+  if (!user) return c.json({ error: "user_not_found" }, 404);
+
+  const [positions, orders] = await Promise.all([
+    prisma.position.findMany({ where: { userId: user.id } }),
+    prisma.order.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: "desc" },
+    }),
+  ]);
+
+  const metaMap = latestOrderMap(orders);
+
+  let totalStakedCents = new Decimal(0);
+  let totalToWinCents = new Decimal(0);
+  for (const p of positions) {
+    totalStakedCents = totalStakedCents.plus(
+      new Decimal(p.avgPriceCents).times(p.quantity)
+    );
+    const meta = metaMap.get(p.symbol);
+    totalToWinCents = totalToWinCents.plus(
+      new Decimal(meta?.toWinCents ?? 0).times(p.quantity)
+    );
+  }
+
+  return c.json({
+    balance: user.balanceCents / 100,
+    balanceCents: user.balanceCents,
+    totalStaked: totalStakedCents.div(100).toNumber(),
+    totalToWin: totalToWinCents.div(100).toNumber(),
+    openPositionsCount: positions.length,
+    totalOrdersCount: orders.length,
+    currency: "USD",
+  });
 });
 
 export default router;

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { UserButton } from "@clerk/react";
 import { useSportsStore } from "../stores/sportsStore.js";
 import type { ActiveFilter } from "../stores/sportsStore.js";
@@ -75,6 +76,12 @@ export function MarketBrowserLayout() {
         <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-3">
           <span className="font-bold tracking-tight text-zinc-100">Onyx Odds</span>
           <div className="flex items-center gap-3">
+            <Link
+              to="/account"
+              className="text-sm font-medium text-zinc-400 transition-colors hover:text-zinc-100"
+            >
+              My Bets
+            </Link>
             {balance !== undefined && (
               <span className="text-sm font-medium text-zinc-300">
                 $

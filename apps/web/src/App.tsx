@@ -3,6 +3,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute.js";
 import { SignInPage } from "./pages/SignInPage.js";
 import { SignUpPage } from "./pages/SignUpPage.js";
 import { DashboardPage } from "./pages/DashboardPage.js";
+import { AccountPage } from "./pages/AccountPage.js";
 import { ToastContainer } from "./components/ToastContainer.js";
 
 function App() {
@@ -15,6 +16,7 @@ function App() {
           <Route path="/sign-up/*" element={<SignUpPage />} />
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/account" element={<AccountPage />} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
           </Route>
         </Routes>
