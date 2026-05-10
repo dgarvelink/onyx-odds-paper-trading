@@ -44,11 +44,40 @@ npx prisma generate
 
 **shadcn/ui.** `components.json` at `apps/web/` root configures shadcn. Add components with `npx shadcn@latest add <component>` from inside `apps/web/`. Components land in `apps/web/src/components/ui/`. The `cn()` utility is at `@/lib/utils`.
 
-**Shared types flow one way.** `packages/types` exports Zod schemas and their inferred TypeScript types. Both `apps/web` and `apps/api` depend on it via `"@onyx-odds/types": "*"`. The types package must be built (`npm run build --workspace=packages/types`) before it can be imported at runtime; during dev in the web app Vite resolves it directly from source via the workspace symlink.
+**Shared types flow one way.** `packages/types` exports Zod schemas and their inferred TypeScript types for Onyx API responses (`MarketResponseSchema`, `EventResponseSchema`, `SportCountSchema`, etc.). Both `apps/web` and `apps/api` depend on it via `"@onyx-odds/types": "*"`. The types package must be built (`npm run build --workspace=packages/types`) before it can be imported at runtime; during dev in the web app Vite resolves it directly from source via the workspace symlink.
 
-**API auth via Clerk.** The backend uses `@clerk/backend` for token verification. The frontend uses `@clerk/react`. Keys come from env vars — never hardcoded.
+**API auth via Clerk.** The backend uses `@clerk/backend` for token verification via `clerkAuth` middleware in `apps/api/src/middleware/auth.ts`. The frontend uses `@clerk/react`. Keys come from env vars — never hardcoded. The frontend axios instance in `apps/web/src/lib/api.ts` attaches tokens via `window.Clerk?.session?.getToken()` in a request interceptor.
 
-**Decimal precision.** Use `decimal.js` for all price/money arithmetic on the API side. JavaScript `number` is not used for financial values.
+**Decimal precision.** Use `decimal.js` for all price/money arithmetic on the API side. JavaScript `number` is not used for financial values. **Critical**: use the named import `import { Decimal } from "decimal.js"` — the default import fails TypeScript's NodeNext module resolution (`import Decimal from "decimal.js"` causes TS2351).
+
+**Zustand v5 pattern.** All stores use the curried create form: `create<State>()((set) => ...)`. Three stores exist: `sportsStore` (active sport/filter/search), `betSlipStore` (pending bet selections), and `useToastStore` (in `lib/toast.ts`). The toast store also exports an imperative `toast.success/error` helper that calls `useToastStore.getState()` so it works outside React components.
+
+**TanStack Query v5.** Frontend data hooks use `useQuery` / `useMutation`. Established query keys: `["balance"]`, `["orders"]`, `["positions"]`, `["summary"]`, `["games", sport]`, `["sports"]`. Invalidate `["balance"]` and `["orders"]` after order placement; invalidate `["positions"]` and `["summary"]` if needed.
+
+## Data flow
+
+Games come from the external Onyx API at `https://predictions.dev-onyxodds.com`. The backend proxies all Onyx API calls (in `routes/onyx.ts`) and caches responses in Redis. Cache TTLs: sports 60 s, markets/events 5 s, prices 3 s, sportsdata/games 30 s, live 10 s. The frontend fetches via `useGames(sport)` which hits `/api/onyx/sportsdata/games`.
+
+## Order placement
+
+The symbol format for bets is `BETTYPE-GAME_ID-SIDE` in uppercase (e.g. `SPREAD-23785-HOME`, `TOTAL-23785-OVER`). `POST /api/orders` atomically updates balance, creates an `Order`, and upserts a `Position` in a `prisma.$transaction([...])`. The `Order.metadata` JSON field stores `{ game_id, betType, label, line, odds, toWinCents }`.
+
+When placing multiple bets from the bet slip, use sequential `await` (not `Promise.all`) so each balance check sees the result of the previous deduction:
+
+```ts
+for (const sel of selections) { await placeOrder(sel); }
+clearSlip();
+```
+
+## Prisma schema summary
+
+- `User` — `balanceCents Int @default(100000)` (starts at $1,000), linked to `clerkId`
+- `Order` — `fillPrice` = stake in cents; `metadata Json @default("{}")` holds bet details
+- `Position` — unique on `(userId, symbol, side)`; `avgPriceCents` = stake per unit; upserted on each order
+
+## N+1 avoidance on account routes
+
+`GET /api/account/positions` and `GET /api/account/summary` both need order metadata enrichment. They batch-fetch all orders once and build a `Map<symbol, OrderMetadata>` via `latestOrderMap()` rather than querying per position.
 
 ## Environment variables
 
