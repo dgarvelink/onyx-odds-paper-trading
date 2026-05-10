@@ -13,15 +13,19 @@ export type BetSelection = {
 
 interface BetSlipState {
   selections: BetSelection[];
+  mode: "single" | "parlay";
   addSelection: (selection: BetSelection) => void;
   removeSelection: (id: string) => void;
   updateStake: (id: string, stake: number) => void;
   clearSlip: () => void;
   toggleSelection: (selection: BetSelection) => void;
+  setMode: (mode: "single" | "parlay") => void;
 }
 
 export const useBetSlipStore = create<BetSlipState>()((set) => ({
   selections: [],
+  mode: "single",
+  setMode: (mode) => set({ mode }),
   addSelection: (selection) =>
     set((state) => ({ selections: [...state.selections, selection] })),
   removeSelection: (id) =>

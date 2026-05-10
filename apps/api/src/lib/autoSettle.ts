@@ -4,6 +4,7 @@ import {
   calculateTotalResult,
   calculatePayout,
 } from "./settlement.js";
+import { calculateParlayOdds, calculateParlayToWin } from "./parlayOdds.js";
 
 const BASE_URL = "https://predictions.dev-onyxodds.com";
 
@@ -13,6 +14,94 @@ type GameShape = {
   home_score: number | null;
   away_score: number | null;
 };
+
+async function settleParlays(
+  finalGames: GameShape[]
+): Promise<{ settled: number; errors: number }> {
+  let settled = 0,
+    errors = 0;
+
+  for (const game of finalGames) {
+    const parlays = await prisma.parlay.findMany({
+      where: {
+        status: "OPEN",
+        legs: { some: { game_id: game.game_id, status: "PENDING" } },
+      },
+      include: { legs: true, user: true },
+    });
+
+    for (const parlay of parlays) {
+      try {
+        const updatedLegs = await Promise.all(
+          parlay.legs.map(async (leg) => {
+            if (leg.game_id !== game.game_id || leg.status !== "PENDING") return leg;
+            const result =
+              leg.betType === "spread"
+                ? calculateSpreadResult(
+                    game.home_score!,
+                    game.away_score!,
+                    leg.line,
+                    leg.side as "home" | "away"
+                  )
+                : calculateTotalResult(
+                    game.home_score!,
+                    game.away_score!,
+                    leg.line,
+                    leg.side as "over" | "under"
+                  );
+            await prisma.parlayLeg.update({ where: { id: leg.id }, data: { status: result } });
+            return { ...leg, status: result };
+          })
+        );
+
+        // Not all games done yet — will settle when the last leg finishes
+        if (updatedLegs.some((l) => l.status === "PENDING")) continue;
+
+        let parlayResult: "WON" | "LOST" | "PUSH";
+        let payout: number;
+
+        if (updatedLegs.some((l) => l.status === "LOST")) {
+          parlayResult = "LOST";
+          payout = 0;
+        } else if (updatedLegs.every((l) => l.status === "PUSH")) {
+          parlayResult = "PUSH";
+          payout = parlay.stakeCents;
+        } else {
+          // WON or WON+PUSH mix — drop pushed legs from odds recalc
+          const wonLegs = updatedLegs.filter((l) => l.status === "WON");
+          parlayResult = "WON";
+          if (wonLegs.length === updatedLegs.length) {
+            payout = parlay.stakeCents + parlay.toWinCents;
+          } else {
+            const newOdds = calculateParlayOdds(wonLegs.map((l) => l.odds));
+            payout = parlay.stakeCents + calculateParlayToWin(parlay.stakeCents, newOdds);
+          }
+        }
+
+        await prisma.$transaction([
+          prisma.parlaySettlement.create({
+            data: { parlayId: parlay.id, result: parlayResult, payout },
+          }),
+          prisma.parlay.update({ where: { id: parlay.id }, data: { status: parlayResult } }),
+          ...(payout > 0
+            ? [
+                prisma.user.update({
+                  where: { id: parlay.userId },
+                  data: { balanceCents: { increment: payout } },
+                }),
+              ]
+            : []),
+        ]);
+        settled++;
+      } catch (err) {
+        console.error("[Settlement] parlay", parlay.id, err);
+        errors++;
+      }
+    }
+  }
+
+  return { settled, errors };
+}
 
 export async function runAutoSettlement(): Promise<{
   settled: number;
@@ -110,5 +199,10 @@ export async function runAutoSettlement(): Promise<{
     }
   }
 
-  return { settled, skipped, errors };
+  const parlayStats = await settleParlays(finalGames);
+  return {
+    settled: settled + parlayStats.settled,
+    skipped,
+    errors: errors + parlayStats.errors,
+  };
 }

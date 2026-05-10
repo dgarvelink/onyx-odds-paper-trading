@@ -15,6 +15,7 @@ model User {
   updatedAt    DateTime   @updatedAt
   orders       Order[]
   positions    Position[]
+  parlays      Parlay[]
 }
 
 model Order {
@@ -51,4 +52,40 @@ model Position {
   updatedAt     DateTime @updatedAt
 
   @@unique([userId, symbol, side])
+}
+
+model Parlay {
+  id         String            @id @default(cuid())
+  userId     String
+  user       User              @relation(fields: [userId], references: [id])
+  status     String            @default("OPEN")
+  stakeCents Int
+  toWinCents Int
+  parlayOdds Int
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+  legs       ParlayLeg[]
+  settlement ParlaySettlement?
+}
+
+model ParlayLeg {
+  id       String @id @default(cuid())
+  parlayId String
+  parlay   Parlay @relation(fields: [parlayId], references: [id])
+  game_id  Int
+  betType  String
+  side     String
+  label    String
+  line     Float
+  odds     Int
+  status   String @default("PENDING")
+}
+
+model ParlaySettlement {
+  id        String   @id @default(cuid())
+  parlayId  String   @unique
+  parlay    Parlay   @relation(fields: [parlayId], references: [id])
+  result    String
+  payout    Int
+  settledAt DateTime @default(now())
 }

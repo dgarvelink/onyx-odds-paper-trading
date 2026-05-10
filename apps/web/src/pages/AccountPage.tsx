@@ -5,9 +5,10 @@ import { useUserSync } from "../hooks/useUserSync.js";
 import { useBalance } from "../hooks/useBalance.js";
 import { AccountSummaryBar } from "../components/AccountSummaryBar.js";
 import { PositionsTable } from "../components/PositionsTable.js";
+import { ParlaysTable } from "../components/ParlaysTable.js";
 import { OrderHistoryTable } from "../components/OrderHistoryTable.js";
 
-type Tab = "positions" | "orders";
+type Tab = "positions" | "parlays" | "orders";
 
 export function AccountPage() {
   useUserSync();
@@ -53,7 +54,7 @@ export function AccountPage() {
         </div>
 
         <div className="mb-4 flex border-b border-zinc-800">
-          {(["positions", "orders"] as Tab[]).map((tab) => (
+          {(["positions", "parlays", "orders"] as Tab[]).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -63,12 +64,22 @@ export function AccountPage() {
                   : "text-zinc-500 hover:text-zinc-300"
               }`}
             >
-              {tab === "positions" ? "Open Positions" : "Order History"}
+              {tab === "positions"
+                ? "Open Positions"
+                : tab === "parlays"
+                  ? "Parlays"
+                  : "Order History"}
             </button>
           ))}
         </div>
 
-        {activeTab === "positions" ? <PositionsTable /> : <OrderHistoryTable />}
+        {activeTab === "positions" ? (
+          <PositionsTable />
+        ) : activeTab === "parlays" ? (
+          <ParlaysTable />
+        ) : (
+          <OrderHistoryTable />
+        )}
       </div>
     </div>
   );

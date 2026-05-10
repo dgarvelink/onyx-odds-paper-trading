@@ -7,6 +7,7 @@ import onyxRouter from "./routes/onyx.js";
 import usersRouter from "./routes/users.js";
 import ordersRouter from "./routes/orders.js";
 import accountRouter from "./routes/account.js";
+import parlaysRouter from "./routes/parlays.js";
 import { startSettlementScheduler } from "./lib/settlementScheduler.js";
 
 const app = new Hono();
@@ -24,6 +25,7 @@ app.route("/", onyxRouter);
 app.route("/", usersRouter);
 app.route("/", ordersRouter);
 app.route("/", accountRouter);
+app.route("/", parlaysRouter);
 
 app.get("/health", (c) => {
   return c.json({ status: "ok" });
