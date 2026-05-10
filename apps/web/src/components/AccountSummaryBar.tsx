@@ -80,7 +80,7 @@ export function AccountSummaryBar() {
         {cards.map(({ label, value, sub, valueClass }) => (
           <div
             key={label}
-            className="rounded-lg border border-zinc-800 bg-zinc-900 p-4"
+            className="rounded-lg border border-rim bg-panel p-4"
           >
             <p className="mb-1 text-xs text-zinc-500">{label}</p>
             <p className={`text-2xl font-bold text-zinc-100 ${valueClass}`}>
@@ -94,7 +94,7 @@ export function AccountSummaryBar() {
         {historyCards.map(({ label, value, sub, valueClass }) => (
           <div
             key={label}
-            className="rounded-lg border border-zinc-800 bg-zinc-900 p-4"
+            className="rounded-lg border border-rim bg-panel p-4"
           >
             <p className="mb-1 text-xs text-zinc-500">{label}</p>
             <p className={`text-2xl font-bold text-zinc-100 ${valueClass}`}>

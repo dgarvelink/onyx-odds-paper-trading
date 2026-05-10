@@ -18,7 +18,7 @@ export function SearchBar() {
         value={localValue}
         onChange={(e) => setLocalValue(e.target.value)}
         placeholder="Search teams..."
-        className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 pr-8 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full rounded-md border border-rim bg-panel px-3 py-2 pr-8 text-sm text-zinc-100 placeholder:text-dim focus:outline-none focus:ring-2 focus:ring-brand"
       />
       {localValue && (
         <button

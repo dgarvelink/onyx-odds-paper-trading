@@ -10,6 +10,7 @@ import { useBalance } from "../hooks/useBalance.js";
 import { SearchBar } from "./SearchBar.js";
 import { GameCard } from "./GameCard.js";
 import { BetSlip } from "./BetSlip.js";
+import { ErrorBoundary } from "./ErrorBoundary.js";
 
 const STATUS_ORDER: Record<string, number> = { InProgress: 0, Scheduled: 1, Final: 2 };
 
@@ -88,17 +89,17 @@ export function MarketBrowserLayout() {
   const dateGroups = groupByDate(filteredGames);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-zinc-950 text-zinc-100">
+    <div className="flex h-screen overflow-hidden bg-navy text-zinc-100">
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Nav header */}
-        <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-3">
+        <div className="flex items-center justify-between border-b border-rim bg-topbar px-4 py-3">
           <span className="font-bold tracking-tight text-zinc-100">Onyx Odds</span>
           <div className="flex items-center gap-3">
             {isSignedIn ? (
               <>
                 <Link
                   to="/account"
-                  className="text-sm font-medium text-zinc-400 transition-colors hover:text-zinc-100"
+                  className="rounded-full border border-rim bg-panel-alt px-3 py-1.5 text-sm font-medium text-zinc-200 transition-colors hover:border-zinc-500 hover:bg-rim hover:text-white"
                 >
                   My Bets
                 </Link>
@@ -116,7 +117,7 @@ export function MarketBrowserLayout() {
             ) : (
               <Link
                 to="/sign-in"
-                className="rounded-md border border-zinc-700 px-3 py-1.5 text-sm font-medium text-zinc-300 transition-colors hover:border-zinc-500 hover:text-zinc-100"
+                className="rounded-full border border-rim px-3 py-1.5 text-sm font-medium text-dim transition-colors hover:border-zinc-500 hover:text-zinc-100"
               >
                 Sign In
               </Link>
@@ -125,7 +126,7 @@ export function MarketBrowserLayout() {
         </div>
 
         {/* Search + filter bar */}
-        <div className="flex items-center gap-3 border-b border-zinc-800 px-4 py-3">
+        <div className="flex items-center gap-3 border-b border-rim bg-topbar px-4 py-3">
           <div className="flex-1">
             <SearchBar />
           </div>
@@ -134,10 +135,10 @@ export function MarketBrowserLayout() {
               <button
                 key={value}
                 onClick={() => setActiveFilter(value)}
-                className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
                   activeFilter === value
-                    ? "bg-blue-500 text-white"
-                    : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-100"
+                    ? "bg-brand text-white"
+                    : "bg-panel-alt text-dim hover:bg-rim hover:text-zinc-100"
                 }`}
               >
                 {label}
@@ -151,35 +152,37 @@ export function MarketBrowserLayout() {
           {isLoading && (
             <div className="flex flex-col gap-3">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-44 animate-pulse rounded-lg bg-zinc-800" />
+                <div key={i} className="h-44 animate-pulse rounded-lg bg-panel-alt" />
               ))}
             </div>
           )}
           {isError && (
-            <div className="flex h-40 items-center justify-center text-zinc-500">
+            <div className="flex h-40 items-center justify-center text-dim">
               Failed to load games
             </div>
           )}
           {!isLoading && !isError && dateGroups.length === 0 && (
-            <div className="flex h-40 items-center justify-center text-zinc-500">
+            <div className="flex h-40 items-center justify-center text-dim">
               No games found
             </div>
           )}
           {!isLoading && !isError && dateGroups.length > 0 && (
-            <div className="flex flex-col gap-6">
-              {dateGroups.map(({ dateKey, games }) => (
-                <div key={dateKey}>
-                  <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">
-                    {formatDateHeader(dateKey)}
+            <ErrorBoundary>
+              <div className="flex flex-col gap-6">
+                {dateGroups.map(({ dateKey, games }) => (
+                  <div key={dateKey}>
+                    <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-dim">
+                      {formatDateHeader(dateKey)}
+                    </div>
+                    <div className="flex flex-col gap-3">
+                      {games.map((game) => (
+                        <GameCard key={game.game_id} game={game} />
+                      ))}
+                    </div>
                   </div>
-                  <div className="flex flex-col gap-3">
-                    {games.map((game) => (
-                      <GameCard key={game.game_id} game={game} />
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            </ErrorBoundary>
           )}
         </div>
 
@@ -188,7 +191,7 @@ export function MarketBrowserLayout() {
           {selections.length > 0 && !drawerOpen && (
             <button
               onClick={() => setDrawerOpen(true)}
-              className="fixed bottom-0 left-0 right-0 z-40 bg-blue-500 py-3 text-center text-sm font-semibold text-white"
+              className="fixed bottom-0 left-0 right-0 z-40 bg-brand py-3 text-center text-sm font-semibold text-white"
             >
               View Bet Slip ({selections.length})
             </button>
@@ -199,17 +202,17 @@ export function MarketBrowserLayout() {
                 className="absolute inset-0 bg-black/60"
                 onClick={() => setDrawerOpen(false)}
               />
-              <div className="relative flex max-h-[80vh] flex-col rounded-t-2xl bg-zinc-900 p-4">
+              <div className="relative flex max-h-[80vh] flex-col rounded-t-2xl bg-panel p-4">
                 <div className="mb-3 flex items-center justify-between">
                   <span className="font-semibold text-zinc-100">Bet Slip</span>
                   <button
                     onClick={() => setDrawerOpen(false)}
-                    className="text-zinc-500 hover:text-zinc-300"
+                    className="text-dim hover:text-zinc-300"
                   >
                     ✕
                   </button>
                 </div>
-                <BetSlip />
+                <ErrorBoundary><BetSlip /></ErrorBoundary>
               </div>
             </div>
           )}
@@ -217,7 +220,7 @@ export function MarketBrowserLayout() {
       </div>
 
       {/* Desktop bet slip sidebar */}
-      <div className="hidden w-80 shrink-0 border-l border-zinc-800 p-4 lg:flex lg:flex-col">
+      <div className="hidden w-80 shrink-0 border-l border-rim p-4 lg:flex lg:flex-col">
         <BetSlip />
       </div>
     </div>

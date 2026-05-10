@@ -21,7 +21,7 @@ export function OrderHistoryTable() {
     return (
       <div className="flex flex-col gap-2">
         {[1, 2, 3, 4, 5].map((i) => (
-          <div key={i} className="h-12 animate-pulse rounded bg-zinc-800" />
+          <div key={i} className="h-12 animate-pulse rounded bg-panel-alt" />
         ))}
       </div>
     );
@@ -31,7 +31,7 @@ export function OrderHistoryTable() {
     return (
       <div className="flex flex-col items-center justify-center gap-2 py-20 text-center">
         <p className="font-medium text-zinc-300">No orders yet</p>
-        <p className="text-sm text-zinc-500">Your bet history will appear here</p>
+        <p className="text-sm text-dim">Your bet history will appear here</p>
       </div>
     );
   }
@@ -43,7 +43,7 @@ export function OrderHistoryTable() {
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-zinc-800 text-left text-xs text-zinc-500">
+            <tr className="border-b border-rim text-left text-xs text-dim">
               <th className="pb-3 pr-4 font-medium">Bet</th>
               <th className="pb-3 pr-4 font-medium">Type</th>
               <th className="pb-3 pr-4 font-medium">Side</th>
@@ -55,50 +55,53 @@ export function OrderHistoryTable() {
             </tr>
           </thead>
           <tbody>
-            {visible.map((o) => {
+            {visible.map((o, idx) => {
               const meta = o.metadata;
               const statusClass =
-                o.status === "FILLED" ? "bg-yellow-500/20 text-yellow-400"
-                : o.status === "WON"  ? "bg-green-500/20 text-green-400"
-                : o.status === "LOST" ? "bg-red-500/20 text-red-400"
-                :                       "bg-zinc-700 text-zinc-400";
+                o.status === "FILLED" ? "bg-yellow-400 text-black"
+                : o.status === "WON"  ? "bg-win text-black"
+                : o.status === "LOST" ? "bg-loss text-white"
+                :                       "bg-slate-600 text-white";
               const statusLabel = o.status === "FILLED" ? "OPEN" : o.status;
               return (
-                <tr key={o.id} className="border-b border-zinc-800/50">
+                <tr
+                  key={o.id}
+                  className={`border-b border-rim/50 ${idx % 2 === 1 ? "bg-panel/40" : ""}`}
+                >
                   <td className="py-3 pr-4 font-medium text-zinc-100">
                     {meta.label ?? o.symbol}
                   </td>
                   <td className="py-3 pr-4">
-                    <span className="rounded bg-zinc-700 px-1.5 py-0.5 text-xs font-semibold uppercase text-zinc-300">
+                    <span className="rounded bg-panel-alt px-1.5 py-0.5 text-xs font-semibold uppercase text-dim">
                       {meta.betType ?? "—"}
                     </span>
                   </td>
-                  <td className="py-3 pr-4 text-zinc-400">{o.side}</td>
+                  <td className="py-3 pr-4 text-dim">{o.side}</td>
                   <td className="py-3 pr-4 text-zinc-300">
                     ${(o.fillPrice / 100).toFixed(2)}
                   </td>
                   <td className="py-3 pr-4 font-medium">
                     {o.status === "PUSH" && (
-                      <span className="text-zinc-400">Push — Stake Returned</span>
+                      <span className="text-dim">Push — Stake Returned</span>
                     )}
                     {o.status === "LOST" && (
-                      <span className="text-red-400">$0.00</span>
+                      <span className="text-loss">$0.00</span>
                     )}
                     {(o.status === "WON" || o.status === "FILLED") && (
-                      <span className="text-green-400">
+                      <span className="text-win">
                         ${((meta.toWinCents ?? 0) / 100).toFixed(2)}
                       </span>
                     )}
                   </td>
-                  <td className="py-3 pr-4 text-zinc-400">{meta.odds ?? -110}</td>
+                  <td className="py-3 pr-4 text-dim">{meta.odds ?? -110}</td>
                   <td className="py-3 pr-4">
                     <span
-                      className={`rounded px-1.5 py-0.5 text-xs font-semibold ${statusClass}`}
+                      className={`rounded-full px-2 py-0.5 text-xs font-semibold ${statusClass}`}
                     >
                       {statusLabel}
                     </span>
                   </td>
-                  <td className="py-3 text-zinc-500">{relativeTime(o.createdAt)}</td>
+                  <td className="py-3 text-dim">{relativeTime(o.createdAt)}</td>
                 </tr>
               );
             })}
@@ -108,7 +111,7 @@ export function OrderHistoryTable() {
       {visibleCount < orders.length && (
         <button
           onClick={() => setVisibleCount((n) => n + PAGE_SIZE)}
-          className="mt-4 w-full rounded-md border border-zinc-700 py-2 text-sm text-zinc-400 hover:text-zinc-200"
+          className="mt-4 w-full rounded-md border border-rim py-2 text-sm text-dim hover:text-zinc-200"
         >
           Load more ({orders.length - visibleCount} remaining)
         </button>

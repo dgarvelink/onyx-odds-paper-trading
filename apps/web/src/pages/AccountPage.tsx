@@ -7,6 +7,7 @@ import { AccountSummaryBar } from "../components/AccountSummaryBar.js";
 import { PositionsTable } from "../components/PositionsTable.js";
 import { ParlaysTable } from "../components/ParlaysTable.js";
 import { OrderHistoryTable } from "../components/OrderHistoryTable.js";
+import { ErrorBoundary } from "../components/ErrorBoundary.js";
 
 type Tab = "positions" | "parlays" | "orders";
 
@@ -16,8 +17,8 @@ export function AccountPage() {
   const [activeTab, setActiveTab] = useState<Tab>("positions");
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100">
-      <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-3">
+    <div className="min-h-screen bg-navy text-zinc-100">
+      <div className="flex items-center justify-between border-b border-rim bg-topbar px-4 py-3">
         <Link
           to="/dashboard"
           className="font-bold tracking-tight text-zinc-100 hover:text-zinc-300"
@@ -50,10 +51,12 @@ export function AccountPage() {
         </div>
 
         <div className="mb-8">
-          <AccountSummaryBar />
+          <ErrorBoundary>
+            <AccountSummaryBar />
+          </ErrorBoundary>
         </div>
 
-        <div className="mb-4 flex border-b border-zinc-800">
+        <div className="mb-4 flex border-b border-rim">
           {(["positions", "parlays", "orders"] as Tab[]).map((tab) => (
             <button
               key={tab}
@@ -74,11 +77,11 @@ export function AccountPage() {
         </div>
 
         {activeTab === "positions" ? (
-          <PositionsTable />
+          <ErrorBoundary><PositionsTable /></ErrorBoundary>
         ) : activeTab === "parlays" ? (
-          <ParlaysTable />
+          <ErrorBoundary><ParlaysTable /></ErrorBoundary>
         ) : (
-          <OrderHistoryTable />
+          <ErrorBoundary><OrderHistoryTable /></ErrorBoundary>
         )}
       </div>
     </div>

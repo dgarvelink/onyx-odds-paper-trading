@@ -237,14 +237,14 @@ export function BetSlip() {
       {showLineChangeModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/70" />
-          <div className="relative w-full max-w-sm rounded-xl bg-zinc-900 p-5 shadow-xl">
+          <div className="relative w-full max-w-sm rounded-xl bg-panel p-5 shadow-xl">
             <h3 className="mb-1 text-base font-bold text-zinc-100">Lines Have Moved</h3>
             <p className="mb-3 text-sm text-zinc-400">
               These lines moved against you. Accept the updated lines to proceed?
             </p>
             <div className="mb-4 flex flex-col gap-2">
               {lineChangedSelections.map(({ sel, newLabel }) => (
-                <div key={sel.id} className="rounded-md bg-zinc-800 px-3 py-2 text-xs text-zinc-400">
+                <div key={sel.id} className="rounded-md bg-panel-alt px-3 py-2 text-xs text-dim">
                   <span className="font-medium text-zinc-300">{sel.label}</span>
                   <span className="mx-1">→</span>
                   <span>{newLabel}</span>
@@ -280,7 +280,7 @@ export function BetSlip() {
       )}
 
       {/* Header with count + clear */}
-      <div className="mb-3 flex items-center justify-between border-b border-zinc-800 pb-3">
+      <div className="mb-3 flex items-center justify-between border-b border-rim pb-3">
         <div className="flex items-center gap-2">
           <span className="font-semibold text-zinc-100">Bet Slip</span>
           <span className="rounded-full bg-blue-500 px-2 py-0.5 text-xs font-bold text-white">
@@ -293,15 +293,15 @@ export function BetSlip() {
       </div>
 
       {/* Mode toggle */}
-      <div className="mb-3 flex gap-1 rounded-md bg-zinc-800 p-1">
+      <div className="mb-3 flex gap-1 rounded-md bg-panel p-1">
         {(["single", "parlay"] as const).map((m) => (
           <button
             key={m}
             onClick={() => setMode(m)}
             className={`flex-1 rounded py-1 text-xs font-semibold capitalize transition-colors ${
               mode === m
-                ? "bg-zinc-600 text-zinc-100"
-                : "text-zinc-500 hover:text-zinc-300"
+                ? "bg-panel-alt text-zinc-100"
+                : "text-dim hover:text-zinc-300"
             }`}
           >
             {m}
@@ -313,12 +313,12 @@ export function BetSlip() {
         <>
           <div className="flex flex-1 flex-col gap-3 overflow-y-auto">
             {selections.map((sel) => (
-              <div key={sel.id} className="rounded-md bg-zinc-800 p-3">
+              <div key={sel.id} className="rounded-md bg-panel p-3">
                 <div className="mb-2 flex items-start justify-between gap-2">
                   <div>
                     <p className="text-sm font-semibold text-zinc-100">{sel.label}</p>
                     <span
-                      className={`text-xs uppercase tracking-wide text-zinc-500 ${
+                      className={`text-xs uppercase tracking-wide text-dim ${
                         slipFlashes[sel.id] ? `price-flash-${slipFlashes[sel.id]}` : ""
                       }`}
                     >
@@ -327,14 +327,14 @@ export function BetSlip() {
                   </div>
                   <button
                     onClick={() => removeSelection(sel.id)}
-                    className="text-xs text-zinc-600 hover:text-zinc-400"
+                    className="text-xs text-dim hover:text-zinc-400"
                   >
                     ✕
                   </button>
                 </div>
                 {isSignedIn && (
                   <div className="flex items-center gap-2">
-                    <label className="text-xs text-zinc-500">Stake $</label>
+                    <label className="text-xs text-dim">Stake $</label>
                     <input
                       type="number"
                       min={1}
@@ -342,9 +342,9 @@ export function BetSlip() {
                       step={1}
                       value={sel.stake}
                       onChange={(e) => updateStake(sel.id, Number(e.target.value))}
-                      className="w-20 rounded bg-zinc-700 px-2 py-1 text-sm text-zinc-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-20 rounded border border-rim bg-navy px-2 py-1 text-sm text-zinc-100 focus:outline-none focus:ring-1 focus:ring-brand"
                     />
-                    <span className="text-xs text-zinc-500">
+                    <span className="text-xs text-win">
                       To win: ${((sel.stake * 100) / Math.abs(sel.odds)).toFixed(2)}
                     </span>
                   </div>
@@ -354,18 +354,18 @@ export function BetSlip() {
           </div>
 
           {isSignedIn ? (
-            <div className="mt-3 flex flex-col gap-2 border-t border-zinc-800 pt-3">
+            <div className="mt-3 flex flex-col gap-2 border-t border-rim pt-3">
               <div className="flex justify-between text-sm">
-                <span className="text-zinc-500">Total stake</span>
+                <span className="text-dim">Total stake</span>
                 <span className="text-zinc-100">${totalStake.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-zinc-500">Total to win</span>
-                <span className="text-zinc-100">${totalToWin.toFixed(2)}</span>
+                <span className="text-dim">Total to win</span>
+                <span className="text-win">${totalToWin.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-zinc-500">Balance</span>
-                <span className={isOverBalance ? "text-red-400" : "text-zinc-100"}>
+                <span className="text-dim">Balance</span>
+                <span className={isOverBalance ? "text-loss" : "text-zinc-100"}>
                   {balance !== undefined
                     ? `$${balance.toLocaleString("en-US", {
                         minimumFractionDigits: 2,
@@ -377,20 +377,20 @@ export function BetSlip() {
               <button
                 onClick={handlePlaceAll}
                 disabled={isSinglePending || isOverBalance}
-                className="mt-1 w-full rounded-md bg-blue-500 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-400 disabled:cursor-not-allowed disabled:opacity-50"
+                className="mt-1 w-full rounded-md bg-win py-2.5 text-sm font-semibold text-black transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isSinglePending ? "Placing..." : "Place All Bets"}
               </button>
             </div>
           ) : (
-            <div className="mt-3 flex flex-col gap-2 border-t border-zinc-800 pt-3">
+            <div className="mt-3 flex flex-col gap-2 border-t border-rim pt-3">
               <button
                 onClick={() => navigate("/sign-in")}
-                className="w-full rounded-md bg-blue-500 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-400"
+                className="w-full rounded-md bg-brand py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
               >
                 Sign In to Place Bets
               </button>
-              <p className="text-center text-xs text-zinc-500">
+              <p className="text-center text-xs text-dim">
                 Create a free account to start betting
               </p>
             </div>
@@ -409,17 +409,17 @@ export function BetSlip() {
             {selections.map((sel) => (
               <div
                 key={sel.id}
-                className="flex items-center justify-between rounded-md bg-zinc-800 px-3 py-2"
+                className="flex items-center justify-between rounded-md bg-panel px-3 py-2"
               >
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-zinc-100">{sel.label}</p>
-                  <span className="text-xs uppercase tracking-wide text-zinc-500">
+                  <span className="text-xs uppercase tracking-wide text-dim">
                     {sel.betType}
                   </span>
                 </div>
                 <div className="ml-2 flex items-center gap-2">
                   <span
-                    className={`rounded bg-zinc-700 px-1.5 py-0.5 text-xs font-semibold text-zinc-300 ${
+                    className={`rounded bg-panel-alt px-1.5 py-0.5 text-xs font-semibold text-zinc-300 ${
                       slipFlashes[sel.id] ? `price-flash-${slipFlashes[sel.id]}` : ""
                     }`}
                   >
@@ -427,7 +427,7 @@ export function BetSlip() {
                   </span>
                   <button
                     onClick={() => removeSelection(sel.id)}
-                    className="text-xs text-zinc-600 hover:text-zinc-400"
+                    className="text-xs text-dim hover:text-zinc-400"
                   >
                     ✕
                   </button>
@@ -437,15 +437,15 @@ export function BetSlip() {
           </div>
 
           {isSignedIn ? (
-            <div className="mt-3 flex flex-col gap-2 border-t border-zinc-800 pt-3">
+            <div className="mt-3 flex flex-col gap-2 border-t border-rim pt-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-zinc-500">Parlay Odds</span>
+                <span className="text-sm text-dim">Parlay Odds</span>
                 <span className="text-xl font-bold text-zinc-100">
                   {parlayOdds > 0 ? `+${parlayOdds}` : parlayOdds}
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <label className="text-sm text-zinc-500">Stake $</label>
+                <label className="text-sm text-dim">Stake $</label>
                 <input
                   type="number"
                   min={1}
@@ -453,15 +453,15 @@ export function BetSlip() {
                   step={1}
                   value={parlayStake}
                   onChange={(e) => setParlayStake(Number(e.target.value))}
-                  className="w-24 rounded bg-zinc-700 px-2 py-1 text-sm text-zinc-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-24 rounded border border-rim bg-navy px-2 py-1 text-sm text-zinc-100 focus:outline-none focus:ring-1 focus:ring-brand"
                 />
-                <span className="text-xs text-zinc-500">
+                <span className="text-xs text-win">
                   To win: ${parlayToWin.toFixed(2)}
                 </span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-zinc-500">Balance</span>
-                <span className={isParlayOverBalance ? "text-red-400" : "text-zinc-100"}>
+                <span className="text-dim">Balance</span>
+                <span className={isParlayOverBalance ? "text-loss" : "text-zinc-100"}>
                   {balance !== undefined
                     ? `$${balance.toLocaleString("en-US", {
                         minimumFractionDigits: 2,
@@ -478,20 +478,20 @@ export function BetSlip() {
                   isParlayPending ||
                   isParlayOverBalance
                 }
-                className="mt-1 w-full rounded-md bg-blue-500 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-400 disabled:cursor-not-allowed disabled:opacity-50"
+                className="mt-1 w-full rounded-md bg-win py-2.5 text-sm font-semibold text-black transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isParlayPending ? "Placing..." : "Place Parlay"}
               </button>
             </div>
           ) : (
-            <div className="mt-3 flex flex-col gap-2 border-t border-zinc-800 pt-3">
+            <div className="mt-3 flex flex-col gap-2 border-t border-rim pt-3">
               <button
                 onClick={() => navigate("/sign-in")}
-                className="w-full rounded-md bg-blue-500 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-400"
+                className="w-full rounded-md bg-brand py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
               >
                 Sign In to Place Bets
               </button>
-              <p className="text-center text-xs text-zinc-500">
+              <p className="text-center text-xs text-dim">
                 Create a free account to start betting
               </p>
             </div>
