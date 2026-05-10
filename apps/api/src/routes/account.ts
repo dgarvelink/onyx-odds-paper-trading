@@ -99,7 +99,7 @@ router.get("/api/account/summary", clerkAuth, async (c) => {
   const user = await prisma.user.findUnique({ where: { clerkId } });
   if (!user) return c.json({ error: "user_not_found" }, 404);
 
-  const [positions, filledOrders, settledOrders] = await Promise.all([
+  const [positions, filledOrders, settledOrders, parlays] = await Promise.all([
     prisma.position.findMany({ where: { userId: user.id } }),
     prisma.order.findMany({
       where: { userId: user.id, status: "FILLED" },
@@ -109,6 +109,7 @@ router.get("/api/account/summary", clerkAuth, async (c) => {
       where: { userId: user.id, status: { in: ["WON", "LOST", "PUSH"] } },
       include: { settlements: true },
     }),
+    prisma.parlay.findMany({ where: { userId: user.id }, include: { settlement: true } }),
   ]);
 
   const filledMetaMap = latestOrderMap(filledOrders);
@@ -135,6 +136,23 @@ router.get("/api/account/summary", clerkAuth, async (c) => {
     }
   }
 
+  const allOrderWagered = [...filledOrders, ...settledOrders].reduce(
+    (sum, o) => sum + o.fillPrice,
+    0
+  );
+  const allParlayWagered = parlays.reduce((sum, p) => sum + p.stakeCents, 0);
+  const totalWageredCents = allOrderWagered + allParlayWagered;
+
+  const allOrderReturned = settledOrders.reduce(
+    (sum, o) => sum + (o.settlements?.payout ?? 0),
+    0
+  );
+  const allParlayReturned = parlays.reduce(
+    (sum, p) => sum + (p.settlement?.payout ?? 0),
+    0
+  );
+  const totalReturnedCents = allOrderReturned + allParlayReturned;
+
   return c.json({
     balance: user.balanceCents / 100,
     balanceCents: user.balanceCents,
@@ -145,6 +163,9 @@ router.get("/api/account/summary", clerkAuth, async (c) => {
     settledCount: settledOrders.length,
     totalWon: totalWon.div(100).toNumber(),
     totalPushed,
+    totalWagered: totalWageredCents / 100,
+    totalReturned: totalReturnedCents / 100,
+    netPL: (totalReturnedCents - totalWageredCents) / 100,
     currency: "USD",
   });
 });

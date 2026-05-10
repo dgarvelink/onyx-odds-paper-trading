@@ -11,6 +11,9 @@ export interface AccountSummary {
   settledCount: number;
   totalWon: number;
   totalPushed: number;
+  totalWagered: number;
+  totalReturned: number;
+  netPL: number;
   currency: string;
 }
 
