@@ -43,6 +43,75 @@ packages/
 
 ---
 
+## Running locally
+
+### Prerequisites
+
+- Node.js 20+
+- PostgreSQL (local install or a free [Neon](https://neon.tech) / [Supabase](https://supabase.com) instance)
+- Redis (local install or a free [Upstash](https://upstash.com) instance)
+- A [Clerk](https://clerk.com) application (free tier) — you need the publishable key and secret key
+
+### 1. Clone and install
+
+```bash
+git clone https://github.com/dgarvelink/onyx-odds-paper-trading.git
+cd onyx-odds-paper-trading
+npm install
+```
+
+### 2. Configure environment variables
+
+**API** — copy and fill in `apps/api/.env`:
+
+```bash
+cp apps/api/.env.example apps/api/.env
+```
+
+```env
+DATABASE_URL=postgresql://user:password@localhost:5432/onyxodds
+REDIS_URL=redis://localhost:6379
+CLERK_SECRET_KEY=sk_test_...
+FRONTEND_URL=http://localhost:5173
+PORT=3001
+```
+
+**Web** — copy and fill in `apps/web/.env`:
+
+```bash
+cp apps/web/.env.example apps/web/.env
+```
+
+```env
+VITE_CLERK_PUBLISHABLE_KEY=pk_test_...
+VITE_API_URL=http://localhost:3001
+```
+
+### 3. Set up the database
+
+```bash
+cd apps/api
+npx prisma migrate deploy
+npx prisma generate
+cd ../..
+```
+
+### 4. Start the dev servers
+
+Open two terminals:
+
+```bash
+# Terminal 1 — API (http://localhost:3001)
+npm run dev:api
+
+# Terminal 2 — Frontend (http://localhost:5173)
+npm run dev:web
+```
+
+The frontend proxies API requests to `VITE_API_URL`. Sign up for an account on the running app — Clerk handles the flow and your first `User` row (with a $1,000 starting balance) is created automatically on first sign-in.
+
+---
+
 ## Design decisions
 
 ### Frontend
