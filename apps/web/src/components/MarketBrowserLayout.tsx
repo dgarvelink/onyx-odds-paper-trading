@@ -7,7 +7,6 @@ import { useBetSlipStore } from "../stores/betSlipStore.js";
 import { useGames } from "../hooks/useGames.js";
 import type { Game } from "../hooks/useGames.js";
 import { useBalance } from "../hooks/useBalance.js";
-import { SportsTabs } from "./SportsTabs.js";
 import { SearchBar } from "./SearchBar.js";
 import { GameCard } from "./GameCard.js";
 import { BetSlip } from "./BetSlip.js";
@@ -20,46 +19,63 @@ const FILTER_OPTIONS: Array<{ label: string; value: ActiveFilter }> = [
   { label: "Total", value: "total" },
 ];
 
-function filterAndSort(
-  games: Game[],
-  searchQuery: string,
-  activeFilter: ActiveFilter
-): Game[] {
+function getLocalDateKey(datetime_utc: string): string {
+  const d = new Date(datetime_utc + "Z");
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function formatDateHeader(dateKey: string): string {
+  const now = new Date();
+  const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  const tom = new Date(now);
+  tom.setDate(now.getDate() + 1);
+  const tomorrowKey = `${tom.getFullYear()}-${String(tom.getMonth() + 1).padStart(2, "0")}-${String(tom.getDate()).padStart(2, "0")}`;
+
+  const [y, m, day] = dateKey.split("-").map(Number);
+  const date = new Date(y, m - 1, day);
+  const month = date.toLocaleString("en-US", { month: "long" });
+  if (dateKey === todayKey) return `Today — ${month} ${day}`;
+  if (dateKey === tomorrowKey) return `Tomorrow — ${month} ${day}`;
+  return `${date.toLocaleString("en-US", { weekday: "long" })} — ${month} ${day}`;
+}
+
+function filterGames(games: Game[], searchQuery: string, activeFilter: ActiveFilter): Game[] {
   const q = searchQuery.toLowerCase();
-  return games
-    .filter((g) => {
-      if (q) {
-        const fields = [
-          g.away_city,
-          g.away_name,
-          g.away_key,
-          g.home_city,
-          g.home_name,
-          g.home_key,
-        ];
-        if (!fields.some((f) => f.toLowerCase().includes(q))) return false;
-      }
-      if (activeFilter === "spread") return g.spread !== null;
-      if (activeFilter === "total") return g.over_under !== null;
-      return true;
-    })
-    .sort((a, b) => {
+  return games.filter((g) => {
+    if (q) {
+      const fields = [g.away_city, g.away_name, g.away_key, g.home_city, g.home_name, g.home_key];
+      if (!fields.some((f) => f.toLowerCase().includes(q))) return false;
+    }
+    if (activeFilter === "spread") return g.spread !== null;
+    if (activeFilter === "total") return g.over_under !== null;
+    return true;
+  });
+}
+
+function groupByDate(games: Game[]): Array<{ dateKey: string; games: Game[] }> {
+  const map = new Map<string, Game[]>();
+  for (const game of games) {
+    const key = getLocalDateKey(game.datetime_utc);
+    if (!map.has(key)) map.set(key, []);
+    map.get(key)!.push(game);
+  }
+  for (const bucket of map.values()) {
+    bucket.sort((a, b) => {
       const ao = STATUS_ORDER[a.status] ?? 1;
       const bo = STATUS_ORDER[b.status] ?? 1;
       if (ao !== bo) return ao - bo;
-      if (a.status === "Scheduled" && b.status === "Scheduled") {
-        return (
-          new Date(a.datetime_utc).getTime() - new Date(b.datetime_utc).getTime()
-        );
-      }
-      return 0;
+      return new Date(a.datetime_utc + "Z").getTime() - new Date(b.datetime_utc + "Z").getTime();
     });
+  }
+  return [...map.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([dateKey, games]) => ({ dateKey, games }));
 }
 
 export function MarketBrowserLayout() {
   const { isSignedIn } = useAuth();
-  const { activeSport, activeFilter, searchQuery, setActiveFilter } = useSportsStore();
-  const { games, isLoading, isError } = useGames(activeSport);
+  const { activeFilter, searchQuery, setActiveFilter } = useSportsStore();
+  const { games, isLoading, isError } = useGames();
   const { selections } = useBetSlipStore();
   const { balance } = useBalance();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -68,7 +84,8 @@ export function MarketBrowserLayout() {
     if (selections.length === 0) setDrawerOpen(false);
   }, [selections.length]);
 
-  const visibleGames = filterAndSort(games, searchQuery, activeFilter);
+  const filteredGames = filterGames(games, searchQuery, activeFilter);
+  const dateGroups = groupByDate(filteredGames);
 
   return (
     <div className="flex h-screen overflow-hidden bg-zinc-950 text-zinc-100">
@@ -107,8 +124,6 @@ export function MarketBrowserLayout() {
           </div>
         </div>
 
-        <SportsTabs />
-
         {/* Search + filter bar */}
         <div className="flex items-center gap-3 border-b border-zinc-800 px-4 py-3">
           <div className="flex-1">
@@ -145,15 +160,24 @@ export function MarketBrowserLayout() {
               Failed to load games
             </div>
           )}
-          {!isLoading && !isError && visibleGames.length === 0 && (
+          {!isLoading && !isError && dateGroups.length === 0 && (
             <div className="flex h-40 items-center justify-center text-zinc-500">
               No games found
             </div>
           )}
-          {!isLoading && !isError && visibleGames.length > 0 && (
-            <div className="flex flex-col gap-3">
-              {visibleGames.map((game) => (
-                <GameCard key={game.game_id} game={game} />
+          {!isLoading && !isError && dateGroups.length > 0 && (
+            <div className="flex flex-col gap-6">
+              {dateGroups.map(({ dateKey, games }) => (
+                <div key={dateKey}>
+                  <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                    {formatDateHeader(dateKey)}
+                  </div>
+                  <div className="flex flex-col gap-3">
+                    {games.map((game) => (
+                      <GameCard key={game.game_id} game={game} />
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           )}

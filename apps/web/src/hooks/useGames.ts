@@ -24,15 +24,15 @@ export interface Game {
   over_under: number | null;
 }
 
-export function useGames(sport: string) {
+export function useGames() {
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["games", sport],
+    queryKey: ["games"],
     queryFn: async () => {
-      const res = await api.get<{ games: Game[] }>(`/api/onyx/sportsdata/games?sport=${sport}`);
+      const res = await api.get<{ games: Game[] }>("/api/onyx/sportsdata/games");
       return res.data.games ?? [];
     },
-    refetchInterval: 5000,
-    staleTime: 4000,
+    refetchInterval: 30000,
+    staleTime: 25000,
     retry: 2,
   });
 
