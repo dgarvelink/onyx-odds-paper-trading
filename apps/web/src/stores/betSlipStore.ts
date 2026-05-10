@@ -7,7 +7,7 @@ export type BetSelection = {
   side: "home" | "away" | "over" | "under";
   label: string;
   line: number;
-  odds: -110;
+  odds: number;
   stake: number;
 };
 

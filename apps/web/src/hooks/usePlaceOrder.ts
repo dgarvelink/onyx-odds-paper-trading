@@ -16,6 +16,7 @@ export function usePlaceOrder() {
           label: selection.label,
           line: selection.line,
           stake: selection.stake,
+          odds: selection.odds,
         })
         .then((r) => r.data),
     onSuccess: () => {

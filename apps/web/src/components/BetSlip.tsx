@@ -14,7 +14,7 @@ export function BetSlip() {
   const { placeOrder, isPending } = usePlaceOrder();
 
   const totalStake = selections.reduce((sum, s) => sum + s.stake, 0);
-  const totalToWin = selections.reduce((sum, s) => sum + s.stake / 1.1, 0);
+  const totalToWin = selections.reduce((sum, s) => sum + (s.stake * 100) / Math.abs(s.odds), 0);
   const isOverBalance = balance !== undefined && totalStake > balance;
 
   const handlePlaceAll = async () => {
@@ -87,7 +87,7 @@ export function BetSlip() {
                   className="w-20 rounded bg-zinc-700 px-2 py-1 text-sm text-zinc-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
                 <span className="text-xs text-zinc-500">
-                  To win: ${(sel.stake / 1.1).toFixed(2)}
+                  To win: ${((sel.stake * 100) / Math.abs(sel.odds)).toFixed(2)}
                 </span>
               </div>
             )}

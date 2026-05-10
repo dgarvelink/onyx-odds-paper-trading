@@ -13,6 +13,7 @@ const OrderBody = z.object({
   label: z.string(),
   line: z.number(),
   stake: z.number().min(1).max(1000),
+  odds: z.number().min(-125).max(-100),
 });
 
 router.post("/api/orders", clerkAuth, async (c) => {
@@ -22,7 +23,7 @@ router.post("/api/orders", clerkAuth, async (c) => {
     if (!parsed.success) {
       return c.json({ error: "invalid_body", message: parsed.error.message }, 400);
     }
-    const { game_id, betType, side, label, line, stake } = parsed.data;
+    const { game_id, betType, side, label, line, stake, odds } = parsed.data;
     const clerkId = c.get("clerkId");
 
     const user = await prisma.user.findUnique({ where: { clerkId } });
@@ -39,7 +40,7 @@ router.post("/api/orders", clerkAuth, async (c) => {
       return c.json({ error: "insufficient_balance", message: "Insufficient balance" }, 400);
     }
 
-    const toWinCents = stakeCents.div(1.1).toDecimalPlaces(0, Decimal.ROUND_DOWN);
+    const toWinCents = stakeCents.times(100).div(new Decimal(Math.abs(odds))).toDecimalPlaces(0, Decimal.ROUND_DOWN);
     const symbol = `${betType.toUpperCase()}-${game_id}-${side.toUpperCase()}`;
 
     const [updatedUser, order] = await prisma.$transaction([
@@ -60,7 +61,7 @@ router.post("/api/orders", clerkAuth, async (c) => {
             betType,
             label,
             line,
-            odds: -110,
+            odds,
             toWinCents: toWinCents.toNumber(),
           },
         },

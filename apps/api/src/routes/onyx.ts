@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { getCached, setCached } from "../lib/redis.js";
+import { normalizeGame } from "../lib/normalizeLines.js";
 
 const BASE_URL = "https://predictions.dev-onyxodds.com";
 
@@ -50,7 +51,15 @@ onyx.get("/api/onyx/sportsdata/games", async (c) => {
       (a, b) => new Date(a.datetime_utc).getTime() - new Date(b.datetime_utc).getTime()
     );
 
-    const payload = { sport: "NBA", games: merged, count: merged.length, dates_checked: dates };
+    // Null out totals outside a plausible NBA range — upstream occasionally emits corrupted values
+    for (const game of merged as Array<{ over_under: number | null }>) {
+      if (game.over_under !== null && game.over_under > 300) {
+        game.over_under = null;
+      }
+    }
+
+    const normalizedGames = merged.map(normalizeGame);
+    const payload = { sport: "NBA", games: normalizedGames, count: normalizedGames.length, dates_checked: dates };
     await setCached(cacheKey, payload, 60);
     return c.json(payload);
   } catch (err) {

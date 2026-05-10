@@ -76,10 +76,7 @@ interface GameCardProps {
 export function GameCard({ game }: GameCardProps) {
   const { selections, toggleSelection } = useBetSlipStore();
 
-  const spread = game.spread;
-  const overUnder = game.over_under;
-
-  if (spread === null && overUnder === null) return null;
+  if (game.spread === null && game.over_under === null) return null;
 
   const isSelected = (id: string) => selections.some((s) => s.id === id);
 
@@ -151,11 +148,11 @@ export function GameCard({ game }: GameCardProps) {
 
       {/* Bet buttons */}
       <div className="flex flex-col gap-2 border-t border-zinc-800 pt-3">
-        {spread !== null && (
+        {game.spread_normalized !== null && (
           <div className="flex gap-2">
             <BetButton
-              label={`${game.away_key} ${fmtSpread(spread)}`}
-              odds={-110}
+              label={`${game.away_key} ${fmtSpread(game.spread_normalized!)}`}
+              odds={game.spread_away_odds ?? -110}
               isSelected={isSelected(`${game.game_id}-spread-away`)}
               onClick={() =>
                 toggleSelection({
@@ -163,16 +160,16 @@ export function GameCard({ game }: GameCardProps) {
                   game_id: game.game_id,
                   betType: "spread",
                   side: "away",
-                  label: `${game.away_key} ${fmtSpread(spread)}`,
-                  line: spread,
-                  odds: -110,
+                  label: `${game.away_key} ${fmtSpread(game.spread_normalized!)}`,
+                  line: game.spread_normalized ?? game.spread ?? 0,
+                  odds: game.spread_away_odds ?? -110,
                   stake: 10,
                 })
               }
             />
             <BetButton
-              label={`${game.home_key} ${fmtSpread(-spread)}`}
-              odds={-110}
+              label={`${game.home_key} ${fmtSpread(-game.spread_normalized!)}`}
+              odds={game.spread_home_odds ?? -110}
               isSelected={isSelected(`${game.game_id}-spread-home`)}
               onClick={() =>
                 toggleSelection({
@@ -180,20 +177,20 @@ export function GameCard({ game }: GameCardProps) {
                   game_id: game.game_id,
                   betType: "spread",
                   side: "home",
-                  label: `${game.home_key} ${fmtSpread(-spread)}`,
-                  line: -spread,
-                  odds: -110,
+                  label: `${game.home_key} ${fmtSpread(-game.spread_normalized!)}`,
+                  line: game.spread_normalized ?? game.spread ?? 0,
+                  odds: game.spread_home_odds ?? -110,
                   stake: 10,
                 })
               }
             />
           </div>
         )}
-        {overUnder !== null && (
+        {game.total_normalized !== null && (
           <div className="flex gap-2">
             <BetButton
-              label={`O ${overUnder}`}
-              odds={-110}
+              label={`O ${game.total_normalized}`}
+              odds={game.total_over_odds ?? -110}
               isSelected={isSelected(`${game.game_id}-total-over`)}
               onClick={() =>
                 toggleSelection({
@@ -201,16 +198,16 @@ export function GameCard({ game }: GameCardProps) {
                   game_id: game.game_id,
                   betType: "total",
                   side: "over",
-                  label: `O ${overUnder}`,
-                  line: overUnder,
-                  odds: -110,
+                  label: `Over ${game.total_normalized}`,
+                  line: game.total_normalized ?? game.over_under ?? 0,
+                  odds: game.total_over_odds ?? -110,
                   stake: 10,
                 })
               }
             />
             <BetButton
-              label={`U ${overUnder}`}
-              odds={-110}
+              label={`U ${game.total_normalized}`}
+              odds={game.total_under_odds ?? -110}
               isSelected={isSelected(`${game.game_id}-total-under`)}
               onClick={() =>
                 toggleSelection({
@@ -218,9 +215,9 @@ export function GameCard({ game }: GameCardProps) {
                   game_id: game.game_id,
                   betType: "total",
                   side: "under",
-                  label: `U ${overUnder}`,
-                  line: overUnder,
-                  odds: -110,
+                  label: `Under ${game.total_normalized}`,
+                  line: game.total_normalized ?? game.over_under ?? 0,
+                  odds: game.total_under_odds ?? -110,
                   stake: 10,
                 })
               }

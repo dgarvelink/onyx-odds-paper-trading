@@ -22,6 +22,12 @@ export interface Game {
   home_color: string;
   spread: number | null;
   over_under: number | null;
+  spread_normalized: number | null;
+  spread_home_odds: number | null;
+  spread_away_odds: number | null;
+  total_normalized: number | null;
+  total_over_odds: number | null;
+  total_under_odds: number | null;
 }
 
 export function useGames() {
