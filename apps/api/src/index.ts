@@ -7,6 +7,7 @@ import onyxRouter from "./routes/onyx.js";
 import usersRouter from "./routes/users.js";
 import ordersRouter from "./routes/orders.js";
 import accountRouter from "./routes/account.js";
+import { startSettlementScheduler } from "./lib/settlementScheduler.js";
 
 const app = new Hono();
 
@@ -36,4 +37,5 @@ const port = Number(process.env.PORT) || 3001;
 
 serve({ fetch: app.fetch, port }, () => {
   console.log(`API running on http://localhost:${port}`);
+  startSettlementScheduler();
 });

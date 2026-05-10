@@ -58,9 +58,11 @@ export function OrderHistoryTable() {
             {visible.map((o) => {
               const meta = o.metadata;
               const statusClass =
-                o.status === "FILLED"
-                  ? "bg-green-500/20 text-green-400"
-                  : "bg-zinc-700 text-zinc-400";
+                o.status === "FILLED" ? "bg-yellow-500/20 text-yellow-400"
+                : o.status === "WON"  ? "bg-green-500/20 text-green-400"
+                : o.status === "LOST" ? "bg-red-500/20 text-red-400"
+                :                       "bg-zinc-700 text-zinc-400";
+              const statusLabel = o.status === "FILLED" ? "OPEN" : o.status;
               return (
                 <tr key={o.id} className="border-b border-zinc-800/50">
                   <td className="py-3 pr-4 font-medium text-zinc-100">
@@ -75,15 +77,25 @@ export function OrderHistoryTable() {
                   <td className="py-3 pr-4 text-zinc-300">
                     ${(o.fillPrice / 100).toFixed(2)}
                   </td>
-                  <td className="py-3 pr-4 font-medium text-green-400">
-                    ${((meta.toWinCents ?? 0) / 100).toFixed(2)}
+                  <td className="py-3 pr-4 font-medium">
+                    {o.status === "PUSH" && (
+                      <span className="text-zinc-400">Push — Stake Returned</span>
+                    )}
+                    {o.status === "LOST" && (
+                      <span className="text-red-400">$0.00</span>
+                    )}
+                    {(o.status === "WON" || o.status === "FILLED") && (
+                      <span className="text-green-400">
+                        ${((meta.toWinCents ?? 0) / 100).toFixed(2)}
+                      </span>
+                    )}
                   </td>
-                  <td className="py-3 pr-4 text-zinc-400">-110</td>
+                  <td className="py-3 pr-4 text-zinc-400">{meta.odds ?? -110}</td>
                   <td className="py-3 pr-4">
                     <span
                       className={`rounded px-1.5 py-0.5 text-xs font-semibold ${statusClass}`}
                     >
-                      {o.status}
+                      {statusLabel}
                     </span>
                   </td>
                   <td className="py-3 text-zinc-500">{relativeTime(o.createdAt)}</td>

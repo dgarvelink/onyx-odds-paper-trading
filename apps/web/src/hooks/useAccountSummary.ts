@@ -8,6 +8,9 @@ export interface AccountSummary {
   totalToWin: number;
   openPositionsCount: number;
   totalOrdersCount: number;
+  settledCount: number;
+  totalWon: number;
+  totalPushed: number;
   currency: string;
 }
 

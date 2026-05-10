@@ -18,16 +18,26 @@ model User {
 }
 
 model Order {
+  id          String      @id @default(cuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id])
+  symbol      String
+  side        String
+  quantity    Int
+  fillPrice   Int
+  status      String      @default("FILLED")
+  metadata    Json        @default("{}")
+  createdAt   DateTime    @default(now())
+  settlements Settlement?
+}
+
+model Settlement {
   id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  symbol    String
-  side      String
-  quantity  Int
-  fillPrice Int
-  status    String   @default("FILLED")
-  metadata  Json     @default("{}")
-  createdAt DateTime @default(now())
+  orderId   String   @unique
+  order     Order    @relation(fields: [orderId], references: [id])
+  result    String
+  payout    Int
+  settledAt DateTime @default(now())
 }
 
 model Position {

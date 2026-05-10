@@ -5,8 +5,8 @@ export function AccountSummaryBar() {
 
   if (isLoading || !summary) {
     return (
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {[1, 2, 3, 4].map((i) => (
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
+        {[1, 2, 3, 4, 5].map((i) => (
           <div key={i} className="h-20 animate-pulse rounded-lg bg-zinc-800" />
         ))}
       </div>
@@ -38,10 +38,16 @@ export function AccountSummaryBar() {
       sub: "All time",
       valueClass: "",
     },
+    {
+      label: "Settled",
+      value: String(summary.settledCount ?? 0),
+      sub: `${summary.totalPushed ?? 0} push${(summary.totalPushed ?? 0) !== 1 ? "es" : ""}`,
+      valueClass: "",
+    },
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
       {cards.map(({ label, value, sub, valueClass }) => (
         <div
           key={label}
