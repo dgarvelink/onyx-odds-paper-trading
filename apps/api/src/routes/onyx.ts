@@ -60,7 +60,7 @@ onyx.get("/api/onyx/sportsdata/games", async (c) => {
 
     const normalizedGames = merged.map(normalizeGame);
     const payload = { sport: "NBA", games: normalizedGames, count: normalizedGames.length, dates_checked: dates };
-    await setCached(cacheKey, payload, 60);
+    await setCached(cacheKey, payload, 8);
     return c.json(payload);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

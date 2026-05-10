@@ -1,5 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "../lib/api.js";
+import { useSportsStore } from "../stores/sportsStore.js";
 
 export interface Game {
   game_id: number;
@@ -31,16 +33,31 @@ export interface Game {
 }
 
 export function useGames() {
-  const { data, isLoading, isError } = useQuery({
+  const queryClient = useQueryClient();
+  const [refetchInterval, setRefetchInterval] = useState(30000);
+
+  const query = useQuery({
     queryKey: ["games"],
     queryFn: async () => {
       const res = await api.get<{ games: Game[] }>("/api/onyx/sportsdata/games");
-      return res.data.games ?? [];
+      const newGames = res.data.games ?? [];
+
+      // Snapshot the about-to-be-replaced cache as "previous lines" for flash detection
+      const staleGames = queryClient.getQueryData<Game[]>(["games"]) ?? [];
+      useSportsStore.getState().updatePreviousLines(staleGames);
+
+      return newGames;
     },
-    refetchInterval: 30000,
-    staleTime: 25000,
+    refetchInterval,
+    staleTime: refetchInterval - 2000,
     retry: 2,
   });
 
-  return { games: data ?? [], isLoading, isError };
+  useEffect(() => {
+    if (!query.data) return;
+    const hasLive = query.data.some((g) => g.status === "InProgress");
+    setRefetchInterval(hasLive ? 10000 : 30000);
+  }, [query.data]);
+
+  return { games: query.data ?? [], isLoading: query.isLoading, isError: query.isError };
 }

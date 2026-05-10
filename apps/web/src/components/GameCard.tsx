@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useBetSlipStore } from "../stores/betSlipStore.js";
-import { usePriceFlash } from "../hooks/usePriceFlash.js";
+import { usePriceFlash, useLineFlash } from "../hooks/usePriceFlash.js";
 import type { Game } from "../hooks/useGames.js";
 
 interface BetButtonProps {
@@ -8,9 +8,10 @@ interface BetButtonProps {
   odds: number;
   isSelected: boolean;
   onClick: () => void;
+  lineFlash?: "up" | "down" | null;
 }
 
-function BetButton({ label, odds, isSelected, onClick }: BetButtonProps) {
+function BetButton({ label, odds, isSelected, onClick, lineFlash }: BetButtonProps) {
   const flash = usePriceFlash(odds);
   return (
     <button
@@ -22,12 +23,25 @@ function BetButton({ label, odds, isSelected, onClick }: BetButtonProps) {
       }`}
     >
       <span className="font-semibold leading-tight">{label}</span>
-      <span
-        className={`text-xs ${flash ? `price-flash-${flash}` : ""} ${
-          isSelected ? "text-blue-100" : "text-zinc-400"
-        }`}
-      >
-        {odds > 0 ? `+${odds}` : `${odds}`}
+      <span className="flex items-center gap-1">
+        <span
+          className={`text-xs ${flash ? `price-flash-${flash}` : ""} ${
+            isSelected ? "text-blue-100" : "text-zinc-400"
+          }`}
+        >
+          {odds > 0 ? `+${odds}` : `${odds}`}
+        </span>
+        <span
+          className={`text-xs font-bold transition-opacity duration-300 ${
+            lineFlash === "up"
+              ? "text-green-400 opacity-100"
+              : lineFlash === "down"
+                ? "text-red-400 opacity-100"
+                : "opacity-0"
+          }`}
+        >
+          {lineFlash === "up" ? "↑" : "↓"}
+        </span>
       </span>
     </button>
   );
@@ -75,6 +89,9 @@ interface GameCardProps {
 
 export function GameCard({ game }: GameCardProps) {
   const { selections, toggleSelection } = useBetSlipStore();
+
+  const spreadFlash = useLineFlash(game.game_id, "spread", game.spread_normalized);
+  const totalFlash = useLineFlash(game.game_id, "total", game.total_normalized);
 
   if (game.spread === null && game.over_under === null) return null;
 
@@ -149,11 +166,12 @@ export function GameCard({ game }: GameCardProps) {
       {/* Bet buttons */}
       <div className="flex flex-col gap-2 border-t border-zinc-800 pt-3">
         {game.spread_normalized !== null && (
-          <div className="flex gap-2">
+          <div className={`flex gap-2${spreadFlash ? ` price-flash-${spreadFlash}` : ""}`}>
             <BetButton
               label={`${game.away_key} ${fmtSpread(game.spread_normalized!)}`}
               odds={game.spread_away_odds ?? -110}
               isSelected={isSelected(`${game.game_id}-spread-away`)}
+              lineFlash={spreadFlash}
               onClick={() =>
                 toggleSelection({
                   id: `${game.game_id}-spread-away`,
@@ -171,6 +189,7 @@ export function GameCard({ game }: GameCardProps) {
               label={`${game.home_key} ${fmtSpread(-game.spread_normalized!)}`}
               odds={game.spread_home_odds ?? -110}
               isSelected={isSelected(`${game.game_id}-spread-home`)}
+              lineFlash={spreadFlash}
               onClick={() =>
                 toggleSelection({
                   id: `${game.game_id}-spread-home`,
@@ -187,11 +206,12 @@ export function GameCard({ game }: GameCardProps) {
           </div>
         )}
         {game.total_normalized !== null && (
-          <div className="flex gap-2">
+          <div className={`flex gap-2${totalFlash ? ` price-flash-${totalFlash}` : ""}`}>
             <BetButton
               label={`O ${game.total_normalized}`}
               odds={game.total_over_odds ?? -110}
               isSelected={isSelected(`${game.game_id}-total-over`)}
+              lineFlash={totalFlash}
               onClick={() =>
                 toggleSelection({
                   id: `${game.game_id}-total-over`,
@@ -209,6 +229,7 @@ export function GameCard({ game }: GameCardProps) {
               label={`U ${game.total_normalized}`}
               odds={game.total_under_odds ?? -110}
               isSelected={isSelected(`${game.game_id}-total-under`)}
+              lineFlash={totalFlash}
               onClick={() =>
                 toggleSelection({
                   id: `${game.game_id}-total-under`,

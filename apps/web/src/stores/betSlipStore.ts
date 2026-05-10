@@ -17,6 +17,7 @@ interface BetSlipState {
   addSelection: (selection: BetSelection) => void;
   removeSelection: (id: string) => void;
   updateStake: (id: string, stake: number) => void;
+  updateSelection: (id: string, updates: Partial<BetSelection>) => void;
   clearSlip: () => void;
   toggleSelection: (selection: BetSelection) => void;
   setMode: (mode: "single" | "parlay") => void;
@@ -33,6 +34,10 @@ export const useBetSlipStore = create<BetSlipState>()((set) => ({
   updateStake: (id, stake) =>
     set((state) => ({
       selections: state.selections.map((s) => (s.id === id ? { ...s, stake } : s)),
+    })),
+  updateSelection: (id, updates) =>
+    set((state) => ({
+      selections: state.selections.map((s) => (s.id === id ? { ...s, ...updates } : s)),
     })),
   clearSlip: () => set({ selections: [] }),
   toggleSelection: (selection) =>
