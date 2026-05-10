@@ -14,7 +14,7 @@ const queryClient = new QueryClient();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <ClerkProvider publishableKey={publishableKey}>
+    <ClerkProvider publishableKey={publishableKey} afterSignOutUrl="/sign-in">
       <QueryClientProvider client={queryClient}>
         <AuthenticatedBootstrap />
         <App />

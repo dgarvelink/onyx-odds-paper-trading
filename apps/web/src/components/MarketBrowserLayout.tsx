@@ -112,7 +112,7 @@ export function MarketBrowserLayout() {
                     })}
                   </span>
                 )}
-                <UserButton afterSignOutUrl="/sign-in" />
+                <UserButton />
               </>
             ) : (
               <Link

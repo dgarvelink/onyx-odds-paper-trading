@@ -35,7 +35,7 @@ export function AccountPage() {
               })}
             </span>
           )}
-          <UserButton afterSignOutUrl="/sign-in" />
+          <UserButton />
         </div>
       </div>
 

@@ -3,7 +3,7 @@ import { SignUp } from "@clerk/react";
 export function SignUpPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
-      <SignUp routing="path" path="/sign-up" afterSignUpUrl="/dashboard" />
+      <SignUp routing="path" path="/sign-up" fallbackRedirectUrl="/dashboard" />
     </div>
   );
 }
