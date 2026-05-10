@@ -6,6 +6,15 @@ import { runAutoSettlement } from "../lib/autoSettle.js";
 
 const router = new Hono();
 
+interface PositionRow {
+  id: string;
+  symbol: string;
+  side: string;
+  quantity: number;
+  avgPriceCents: number;
+  updatedAt: Date;
+}
+
 interface OrderMetadata {
   game_id: number;
   betType: string;
@@ -69,8 +78,8 @@ router.get("/api/account/positions", clerkAuth, async (c) => {
   const metaMap = latestOrderMap(orders);
 
   const enriched = positions
-    .filter((p) => metaMap.has(p.symbol))
-    .map((p) => {
+    .filter((p: PositionRow) => metaMap.has(p.symbol))
+    .map((p: PositionRow) => {
       const betType = p.symbol.split("-")[0].toLowerCase();
       const meta = metaMap.get(p.symbol);
 
@@ -113,7 +122,7 @@ router.get("/api/account/summary", clerkAuth, async (c) => {
   ]);
 
   const filledMetaMap = latestOrderMap(filledOrders);
-  const openPositions = positions.filter((p) => filledMetaMap.has(p.symbol));
+  const openPositions = positions.filter((p: PositionRow) => filledMetaMap.has(p.symbol));
 
   let totalStakedCents = new Decimal(0);
   let totalToWinCents = new Decimal(0);
