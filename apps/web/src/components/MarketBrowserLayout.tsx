@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { UserButton } from "@clerk/react";
+import { useAuth, UserButton } from "@clerk/react";
 import { useSportsStore } from "../stores/sportsStore.js";
 import type { ActiveFilter } from "../stores/sportsStore.js";
 import { useBetSlipStore } from "../stores/betSlipStore.js";
@@ -57,6 +57,7 @@ function filterAndSort(
 }
 
 export function MarketBrowserLayout() {
+  const { isSignedIn } = useAuth();
   const { activeSport, activeFilter, searchQuery, setActiveFilter } = useSportsStore();
   const { games, isLoading, isError } = useGames(activeSport);
   const { selections } = useBetSlipStore();
@@ -76,22 +77,33 @@ export function MarketBrowserLayout() {
         <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-3">
           <span className="font-bold tracking-tight text-zinc-100">Onyx Odds</span>
           <div className="flex items-center gap-3">
-            <Link
-              to="/account"
-              className="text-sm font-medium text-zinc-400 transition-colors hover:text-zinc-100"
-            >
-              My Bets
-            </Link>
-            {balance !== undefined && (
-              <span className="text-sm font-medium text-zinc-300">
-                $
-                {balance.toLocaleString("en-US", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
-              </span>
+            {isSignedIn ? (
+              <>
+                <Link
+                  to="/account"
+                  className="text-sm font-medium text-zinc-400 transition-colors hover:text-zinc-100"
+                >
+                  My Bets
+                </Link>
+                {balance !== undefined && (
+                  <span className="text-sm font-medium text-zinc-300">
+                    $
+                    {balance.toLocaleString("en-US", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </span>
+                )}
+                <UserButton afterSignOutUrl="/sign-in" />
+              </>
+            ) : (
+              <Link
+                to="/sign-in"
+                className="rounded-md border border-zinc-700 px-3 py-1.5 text-sm font-medium text-zinc-300 transition-colors hover:border-zinc-500 hover:text-zinc-100"
+              >
+                Sign In
+              </Link>
             )}
-            <UserButton afterSignOutUrl="/sign-in" />
           </div>
         </div>
 
