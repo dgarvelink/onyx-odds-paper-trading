@@ -50,9 +50,9 @@ npx prisma generate
 
 **Decimal precision.** Use `decimal.js` for all price/money arithmetic on the API side. JavaScript `number` is not used for financial values. **Critical**: use the named import `import { Decimal } from "decimal.js"` — the default import fails TypeScript's NodeNext module resolution (`import Decimal from "decimal.js"` causes TS2351).
 
-**Zustand v5 pattern.** All stores use the curried create form: `create<State>()((set) => ...)`. Three stores exist: `sportsStore` (active sport/filter/search), `betSlipStore` (pending bet selections), and `useToastStore` (in `lib/toast.ts`). The toast store also exports an imperative `toast.success/error` helper that calls `useToastStore.getState()` so it works outside React components.
+**Zustand v5 pattern.** All stores use the curried create form: `create<State>()((set) => ...)`. Three stores exist: `sportsStore` (active sport/filter/search), `betSlipStore` (pending bet selections), and `useToastStore` (in `lib/toast.ts`). The toast store also exports an imperative `toast.success/error` helper that calls `useToastStore.getState()` so it works outside React components. `betSlipStore` has a `mode: "single" | "parlay"` field that controls which bet-slip UI is shown; `setMode` resets to `"single"` after a parlay is placed.
 
-**TanStack Query v5.** Frontend data hooks use `useQuery` / `useMutation`. Established query keys: `["balance"]`, `["orders"]`, `["positions"]`, `["summary"]`, `["games", sport]`, `["sports"]`. Invalidate `["balance"]` and `["orders"]` after order placement; invalidate `["positions"]` and `["summary"]` if needed.
+**TanStack Query v5.** Frontend data hooks use `useQuery` / `useMutation`. Established query keys: `["balance"]`, `["orders"]`, `["positions"]`, `["summary"]`, `["games", sport]`, `["sports"]`, `["parlays"]`. Invalidate `["balance"]` and `["orders"]` after order placement; invalidate `["balance"]` and `["parlays"]` after parlay placement.
 
 ## Data flow
 
@@ -72,8 +72,30 @@ clearSlip();
 ## Prisma schema summary
 
 - `User` — `balanceCents Int @default(100000)` (starts at $1,000), linked to `clerkId`
-- `Order` — `fillPrice` = stake in cents; `metadata Json @default("{}")` holds bet details
+- `Order` — `fillPrice` = stake in cents; `metadata Json @default("{}")` holds bet details; status: `FILLED → WON | LOST | PUSH` after settlement
+- `Settlement` — one-to-one with `Order`; stores `result`, `payout` (cents), `settledAt`
 - `Position` — unique on `(userId, symbol, side)`; `avgPriceCents` = stake per unit; upserted on each order
+- `Parlay` — holds combined `parlayOdds`, `stakeCents`, `toWinCents`; status: `OPEN → WON | LOST | PUSH`
+- `ParlayLeg` — one leg per selection; `status: PENDING → WON | LOST | PUSH` updated as each game finalises
+- `ParlaySettlement` — one-to-one with `Parlay`; stores `result`, `payout`, `settledAt`
+
+## Bet settlement
+
+`apps/api/src/lib/autoSettle.ts` runs on a 10 s initial delay then every 60 s via `startSettlementScheduler()` (called in `index.ts`). It fetches yesterday + today's games **directly from the Onyx upstream API** — not from Redis — because the display cache intentionally excludes Final-status games.
+
+Settlement math lives in pure functions in `apps/api/src/lib/settlement.ts` (`calculateSpreadResult`, `calculateTotalResult`, `calculatePayout`). On settlement, orders move `FILLED → WON | LOST | PUSH`, a `Settlement` record is created, and the winner's balance is incremented — all in one `prisma.$transaction`.
+
+Parlay settlement (`settleParlays` inside `autoSettle.ts`) updates individual `ParlayLeg` statuses as each game finalises. The parlay itself only settles once all legs are no longer `PENDING`. If any leg is `LOST` the whole parlay is `LOST`. If the mix is `WON + PUSH`, the pushed legs are dropped and odds are recalculated from the winning legs only using `calculateParlayOdds` / `calculateParlayToWin` from `apps/api/src/lib/parlayOdds.ts`.
+
+## Parlay betting
+
+Parlay pure functions are duplicated in both `apps/api/src/lib/parlayOdds.ts` and `apps/web/src/lib/parlayOdds.ts` so the frontend can show live odds and validation without a round-trip. Keep both in sync if the math changes.
+
+Correlation rules enforced in `validateParlayLegs`:
+- **Blocked**: same `game_id` + same `betType` + opposite `side` (e.g. home spread + away spread)
+- **Allowed**: same `game_id` with different `betType` (spread + total on the same game is fine)
+
+`POST /api/parlays` uses `Decimal.js` for stake math (same pattern as `POST /api/orders`). Max stake $500, min 2 legs, max 8 legs.
 
 ## N+1 avoidance on account routes
 
