@@ -42,9 +42,15 @@ export function useGames() {
       const res = await api.get<{ games: Game[] }>("/api/onyx/sportsdata/games");
       const newGames = res.data.games ?? [];
 
-      // Snapshot the about-to-be-replaced cache as "previous lines" for flash detection
+      // Snapshot the about-to-be-replaced cache as "previous lines" for flash detection.
+      // On the very first fetch staleGames is empty; seed previousLines with newGames so
+      // the second fetch has a baseline to compare against.
       const staleGames = queryClient.getQueryData<Game[]>(["games"]) ?? [];
-      useSportsStore.getState().updatePreviousLines(staleGames);
+      if (staleGames.length > 0) {
+        useSportsStore.getState().updatePreviousLines(staleGames);
+      } else {
+        useSportsStore.getState().updatePreviousLines(newGames);
+      }
 
       return newGames;
     },

@@ -49,7 +49,7 @@ export function BetSlip() {
 
   // Line-change modal state
   const [lineChangedSelections, setLineChangedSelections] = useState<
-    Array<{ sel: BetSelection; oldLine: number; newLine: number; newOdds: number }>
+    Array<{ sel: BetSelection; oldLine: number; newLine: number; newOdds: number; newLabel: string }>
   >([]);
   const [showLineChangeModal, setShowLineChangeModal] = useState(false);
   const [pendingSubmitType, setPendingSubmitType] = useState<"single" | "parlay" | null>(null);
@@ -156,11 +156,12 @@ export function BetSlip() {
               ? game.total_over_odds
               : game.total_under_odds;
         if (newLine !== null && newLine !== sel.line && isAdverseLine(sel, newLine)) {
-          adverse.push({ sel, oldLine: sel.line, newLine, newOdds: newOdds ?? sel.odds });
+          const newLabel = buildLabel(sel, game);
+          adverse.push({ sel, oldLine: sel.line, newLine, newOdds: newOdds ?? sel.odds, newLabel });
           updateSelection(sel.id, {
             line: newLine,
             odds: newOdds ?? sel.odds,
-            label: buildLabel(sel, game),
+            label: newLabel,
           });
         }
       }
@@ -198,11 +199,12 @@ export function BetSlip() {
               ? game.total_over_odds
               : game.total_under_odds;
         if (newLine !== null && newLine !== sel.line && isAdverseLine(sel, newLine)) {
-          adverse.push({ sel, oldLine: sel.line, newLine, newOdds: newOdds ?? sel.odds });
+          const newLabel = buildLabel(sel, game);
+          adverse.push({ sel, oldLine: sel.line, newLine, newOdds: newOdds ?? sel.odds, newLabel });
           updateSelection(sel.id, {
             line: newLine,
             odds: newOdds ?? sel.odds,
-            label: buildLabel(sel, game),
+            label: newLabel,
           });
         }
       }
@@ -241,15 +243,11 @@ export function BetSlip() {
               These lines moved against you. Accept the updated lines to proceed?
             </p>
             <div className="mb-4 flex flex-col gap-2">
-              {lineChangedSelections.map(({ sel, oldLine, newLine }) => (
-                <div key={sel.id} className="rounded-md bg-zinc-800 px-3 py-2 text-xs">
-                  <span className="font-medium text-zinc-300">
-                    {sel.label.split(" ").slice(0, -1).join(" ")}
-                  </span>
-                  <span className="ml-1 text-zinc-500">
-                    {oldLine > 0 ? `+${oldLine}` : oldLine} →{" "}
-                    {newLine > 0 ? `+${newLine}` : newLine}
-                  </span>
+              {lineChangedSelections.map(({ sel, newLabel }) => (
+                <div key={sel.id} className="rounded-md bg-zinc-800 px-3 py-2 text-xs text-zinc-400">
+                  <span className="font-medium text-zinc-300">{sel.label}</span>
+                  <span className="mx-1">→</span>
+                  <span>{newLabel}</span>
                 </div>
               ))}
             </div>
