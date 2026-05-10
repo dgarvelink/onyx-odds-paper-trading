@@ -32,14 +32,14 @@ onyx.get("/api/onyx/sportsdata/games", async (c) => {
       })
     );
 
-    // Merge and deduplicate by game_id, filter to games with usable lines
+    // Merge and deduplicate by game_id; keep only non-Final games with usable lines
     const seen = new Set<number>();
     const merged: unknown[] = [];
     for (const batch of results) {
-      for (const game of batch as Array<{ game_id: number; spread: unknown; over_under: unknown; datetime_utc: string }>) {
+      for (const game of batch as Array<{ game_id: number; status: string; spread: unknown; over_under: unknown; datetime_utc: string }>) {
         if (seen.has(game.game_id)) continue;
         seen.add(game.game_id);
-        if (game.spread !== null || game.over_under !== null) {
+        if (game.status !== "Final" && (game.spread !== null || game.over_under !== null)) {
           merged.push(game);
         }
       }
