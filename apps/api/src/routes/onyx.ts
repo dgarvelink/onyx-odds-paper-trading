@@ -11,9 +11,11 @@ onyx.get("/api/onyx/sportsdata/games", async (c) => {
     const cached = await getCached<unknown>(cacheKey);
     if (cached) return c.json(cached);
 
-    // Generate today + next 6 days in UTC (YYYY-MM-DD)
+    // Generate yesterday + today + next 6 days in UTC (YYYY-MM-DD).
+    // Yesterday is included to catch games that tip off in US evening hours
+    // but whose schedule date on the upstream API is the prior calendar day.
     const dates: string[] = [];
-    for (let i = 0; i < 7; i++) {
+    for (let i = -1; i < 7; i++) {
       const d = new Date();
       d.setUTCDate(d.getUTCDate() + i);
       dates.push(d.toISOString().slice(0, 10));
