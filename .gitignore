@@ -6,6 +6,3 @@ dist/
 *.tsbuildinfo
 .DS_Store
 .playwright-mcp/
-*.png
-*.jpg
-*.jpeg
