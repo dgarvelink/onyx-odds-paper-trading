@@ -137,18 +137,23 @@ router.get("/api/account/summary", clerkAuth, async (c) => {
   }
 
   const allOrderWagered = [...filledOrders, ...settledOrders].reduce(
-    (sum, o) => sum + o.fillPrice,
+    (sum: number, o: { fillPrice: number }) => sum + o.fillPrice,
     0
   );
-  const allParlayWagered = parlays.reduce((sum, p) => sum + p.stakeCents, 0);
+  const allParlayWagered = parlays.reduce(
+    (sum: number, p: { stakeCents: number }) => sum + p.stakeCents,
+    0
+  );
   const totalWageredCents = allOrderWagered + allParlayWagered;
 
   const allOrderReturned = settledOrders.reduce(
-    (sum, o) => sum + (o.settlements?.payout ?? 0),
+    (sum: number, o: { settlements?: { payout: number } | null }) =>
+      sum + (o.settlements?.payout ?? 0),
     0
   );
   const allParlayReturned = parlays.reduce(
-    (sum, p) => sum + (p.settlement?.payout ?? 0),
+    (sum: number, p: { settlement?: { payout: number } | null }) =>
+      sum + (p.settlement?.payout ?? 0),
     0
   );
   const totalReturnedCents = allOrderReturned + allParlayReturned;
