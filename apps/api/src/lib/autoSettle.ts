@@ -1,5 +1,4 @@
 import prisma from "./prisma.js";
-import { getCached } from "./redis.js";
 import {
   calculateSpreadResult,
   calculateTotalResult,
@@ -20,37 +19,31 @@ export async function runAutoSettlement(): Promise<{
   skipped: number;
   errors: number;
 }> {
-  // 1. Redis cache first; fallback to direct Onyx fetch for yesterday+today
-  let games: GameShape[] = [];
-  const cached = await getCached<{ games: GameShape[] }>("onyx:sportsdata:nba:games");
-  if (cached?.games) {
-    games = cached.games;
-  } else {
-    const dates = [-1, 0].map((offset) => {
-      const d = new Date();
-      d.setUTCDate(d.getUTCDate() + offset);
-      return d.toISOString().slice(0, 10);
-    });
-    const results = await Promise.all(
-      dates.map((date) => {
-        const params = new URLSearchParams({ sport: "NBA", date });
-        return fetch(`${BASE_URL}/api/sportsdata/games?${params}`)
-          .then((r) =>
-            r.ok
-              ? (r.json() as Promise<{ games?: GameShape[] }>)
-              : { games: [] }
-          )
-          .then((d: { games?: GameShape[] }) => d.games ?? []);
-      })
-    );
-    const seen = new Set<number>();
-    for (const batch of results)
-      for (const g of batch)
-        if (!seen.has(g.game_id)) {
-          seen.add(g.game_id);
-          games.push(g);
-        }
-  }
+  // Fetch directly from Onyx for yesterday+today — the display cache intentionally
+  // excludes Final games, so we can't use it here.
+  const dates = [-1, 0].map((offset) => {
+    const d = new Date();
+    d.setUTCDate(d.getUTCDate() + offset);
+    return d.toISOString().slice(0, 10);
+  });
+  const results = await Promise.all(
+    dates.map((date) => {
+      const params = new URLSearchParams({ sport: "NBA", date });
+      return fetch(`${BASE_URL}/api/sportsdata/games?${params}`)
+        .then((r) =>
+          r.ok ? (r.json() as Promise<{ games?: GameShape[] }>) : { games: [] }
+        )
+        .then((d: { games?: GameShape[] }) => d.games ?? []);
+    })
+  );
+  const seen = new Set<number>();
+  const games: GameShape[] = [];
+  for (const batch of results)
+    for (const g of batch)
+      if (!seen.has(g.game_id)) {
+        seen.add(g.game_id);
+        games.push(g);
+      }
 
   // 2. Only Final games with both scores present
   const finalGames = games.filter(
